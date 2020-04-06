@@ -196,10 +196,9 @@ dependencies {
         exclude module: "log4j-core"
     }
 
-    implementation  'com.google.code.gson:gson:2.8.5'
-    compile 'org.glassfish.tyrus.bundles:tyrus-standalone-client:1.15'
-    compile 'org.glassfish.tyrus.ext:tyrus-extension-deflate:1.15'
-    compile "org.bitbucket.cowwoc.diff-match-patch:diff-match-patch:1.0"
+    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'org.glassfish.tyrus:tyrus-client:1.16'
+    implementation 'org.glassfish.tyrus.ext:tyrus-extension-deflate:1.16'
 
     implementation 'com.vladsch.flexmark:flexmark:0.61.0'
     implementation 'com.vladsch.flexmark:flexmark-ext-gfm-strikethrough:0.61.0'

@@ -22,7 +22,7 @@ public class ShareLatexLoginDialogView extends BaseDialog<Void> {
     @FXML private PasswordField tbPassword;
     @FXML private Button btnLogin;
     @Inject private ShareLatexManager manager;
-    @Inject DialogService dialogService;
+    @Inject private DialogService dialogService;
 
     private SharelatexConnectionProperties props;
     private ShareLatexLoginDialogViewModel viewModel;

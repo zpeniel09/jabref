@@ -1350,6 +1350,9 @@ public class JabRefPreferences implements PreferencesService {
                 getBibtexKeyPatternPreferences());
     }
 
+    /**
+     * Determines save preferences obeying the user's configuration for saving a .bib file
+     */
     public SavePreferences loadForSaveFromPreferences() {
         return new SavePreferences(
                 false,

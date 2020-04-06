@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.RowConstraints?>
 
-<DialogPane prefHeight="220.0" prefWidth="362.0" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.jabref.gui.sharelatex.ShareLatexLoginDialogViewController">
+<DialogPane prefHeight="220.0" prefWidth="362.0" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.jabref.gui.sharelatex.ShareLatexLoginDialogView">
    <content>
       <BorderPane prefHeight="200.0" prefWidth="402.0">
          <center>
@@ -32,7 +32,6 @@
                   <Label alignment="CENTER_RIGHT" text="%Username" GridPane.rowIndex="1" />
                   <Label text="%Password" GridPane.rowIndex="2" />
                   <PasswordField id="tbPassword" fx:id="tbPassword" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-           
                </children>
             </GridPane>
          </center>

@@ -56,7 +56,7 @@ public class DBMSConnectionProperties implements DatabaseConnectionProperties {
             if (prefs.getPassword().isPresent()) {
                 try {
                     this.password = new Password(prefs.getPassword().get().toCharArray(), prefs.getUser().get()).decrypt();
-                } catch (UnsupportedEncodingException | GeneralSecurityException e) {
+                } catch (GeneralSecurityException e) {
                     LOGGER.error("Could not decrypt password", e);
                 }
             }

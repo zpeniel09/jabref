@@ -75,6 +75,7 @@ public enum StandardActions implements Action {
     EXPORT_SELECTED(Localization.lang("Export selected entries"), KeyBinding.EXPORT_SELECTED),
     CONNECT_TO_SHARED_DB(Localization.lang("Connect to shared database"), IconTheme.JabRefIcons.CONNECT_DB),
     PULL_CHANGES_FROM_SHARED_DB(Localization.lang("Pull changes from shared database"), KeyBinding.PULL_CHANGES_FROM_SHARED_DATABASE),
+    SYNCHRONIZE_WITH_SHARELATEX(Localization.lang("Connect to Overleaf"), IconTheme.JabRefIcons.CONNECT_DB),
     CLOSE_LIBRARY(Localization.lang("Close library"), Localization.lang("Close the current library"), IconTheme.JabRefIcons.CLOSE, KeyBinding.CLOSE_DATABASE),
     QUIT(Localization.lang("Quit"), Localization.lang("Quit JabRef"), IconTheme.JabRefIcons.CLOSE_JABREF, KeyBinding.QUIT_JABREF),
     UNDO(Localization.lang("Undo"), IconTheme.JabRefIcons.UNDO, KeyBinding.UNDO),

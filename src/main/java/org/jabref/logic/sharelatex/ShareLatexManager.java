@@ -19,17 +19,12 @@ import org.apache.commons.logging.LogFactory;
 public class ShareLatexManager {
 
     private static final Log LOGGER = LogFactory.getLog(ShareLatexManager.class);
-    private final SavePreferences prefs;
 
     private final SharelatexConnector connector = new SharelatexConnector();
     private final ShareLatexParser parser = new ShareLatexParser();
     private SharelatexConnectionProperties properties;
 
-    //TODO: FIXME needs to be udpated to the new methods
     public ShareLatexManager() {
-
-        prefs = Globals.prefs.loadForSaveFromPreferences();
-
     }
 
     public String login(String server, String username, String password) throws IOException {
@@ -57,15 +52,15 @@ public class ShareLatexManager {
     }
 
     public void sendNewDatabaseContent(BibDatabaseContext database) {
-
         try {
+            SavePreferences savePreferences = Globals.prefs.loadForSaveFromPreferences();
             /*
-            AtomicFileWriter fileWriter = new AtomicFileWriter(Paths.get(""), prefs.getEncoding());
+            AtomicFileWriter fileWriter = new AtomicFileWriter(Paths.get(""), savePreferences.getEncoding());
 
             StringWriter strWriter = new StringWriter();
-            BibtexDatabaseWriter stringdbWriter = new BibtexDatabaseWriter(strWriter, prefs, Globals.entryTypesManager)
+            BibtexDatabaseWriter stringdbWriter = new BibtexDatabaseWriter(strWriter, savePreferences, Globals.entryTypesManager)
 
-                fileWriter.saveDatabase, prefs);
+                fileWriter.saveDatabase, savePreferences);
 
               stringdbWriter.saveDatabase(database);
             String updatedcontent = saveSession.getStringValue().replace("\r\n", "\n");

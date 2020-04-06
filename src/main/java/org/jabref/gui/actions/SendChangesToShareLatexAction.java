@@ -14,12 +14,10 @@ public class SendChangesToShareLatexAction extends AbstractAction {
     public SendChangesToShareLatexAction() {
         super();
         putValue(Action.NAME, "Send changes to ShareLaTeX Server");
-
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-
         ShareLatexManager manager = Globals.shareLatexManager;
         StateManager stateManager = Globals.stateManager;
         manager.sendNewDatabaseContent(stateManager.getActiveDatabase().get());

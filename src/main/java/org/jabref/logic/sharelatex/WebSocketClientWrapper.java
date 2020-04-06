@@ -46,7 +46,6 @@ public class WebSocketClientWrapper {
     private String oldContent;
     private int version;
     private int commandCounter;
-    private int position;
     private ImportFormatPreferences prefs;
     private String docId;
     private String projectId;
@@ -190,14 +189,12 @@ public class WebSocketClientWrapper {
 
     @Subscribe
     public synchronized void listenToSharelatexEntryMessage(ShareLatexContinueMessageEvent event) {
-
         JabRefExecutorService.INSTANCE.executeInterruptableTask(() -> {
             try {
                 String updatedContent = queue.take();
                 if (!leftDoc) {
                     LOGGER.debug("Taken from queue");
                     sendUpdateAsDeleteAndInsert(docId, 0, version, oldContent, updatedContent);
-
                 }
             } catch (IOException | InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -207,7 +204,11 @@ public class WebSocketClientWrapper {
 
     }
 
-    //Actual response handling
+    /**
+     * Actual response handling
+     *
+     * @param message the message from ShareLaTeX
+     */
     private void parseContents(String message) {
         try {
 

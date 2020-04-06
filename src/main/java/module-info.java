@@ -88,4 +88,8 @@ open module org.jabref {
     requires flexmark.ext.gfm.tasklist;
     requires flexmark.util.ast;
     requires flexmark.util.data;
+
+    requires tyrus.client;
+    requires tyrus.extension.deflate;
+    requires javax.websocket.api;
 }

@@ -2,11 +2,12 @@ package org.jabref.logic.sharelatex;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 import org.jabref.logic.importer.ImportFormatPreferences;
 import org.jabref.logic.importer.ParseException;
@@ -17,17 +18,22 @@ import org.jabref.model.sharelatex.ShareLatexProject;
 import org.jabref.model.sharelatex.SharelatexOtAppliedMessage;
 import org.jabref.model.util.FileUpdateMonitor;
 
+import com.github.difflib.DiffUtils;
+import com.github.difflib.algorithm.DiffException;
+import com.github.difflib.patch.AbstractDelta;
+import com.github.difflib.patch.Patch;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.bitbucket.cowwoc.diffmatchpatch.DiffMatchPatch;
-import org.bitbucket.cowwoc.diffmatchpatch.DiffMatchPatch.Diff;
-import org.bitbucket.cowwoc.diffmatchpatch.DiffMatchPatch.Operation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ShareLatexParser {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShareLatexParser.class);
 
     private final JsonParser parser = new JsonParser();
     private final Gson gson = new GsonBuilder().create();
@@ -100,34 +106,64 @@ public class ShareLatexParser {
         return "";
     }
 
-    public List<SharelatexDoc> generateDiffs(String before, String after) {
-        DiffMatchPatch patch = new DiffMatchPatch();
 
-        LinkedList<Diff> diffs = patch.diffMain(before, after);
-        patch.diffCleanupSemantic(diffs);
+
+    public List<SharelatexDoc> generateDiffs(String before, String after) {
+        Patch<String> patches;
+        try {
+            // Splits the lines using "\n" - therefore, we can use "\n" later on to join the text again
+            patches = DiffUtils.diff(before, after, null);
+        } catch (DiffException e) {
+            LOGGER.error("Could not calculate diff", e);
+            return Collections.emptyList();
+        }
 
         int pos = 0;
 
         List<SharelatexDoc> docsWithChanges = new ArrayList<>();
 
-        for (Diff d : diffs) {
+        for (AbstractDelta<String> delta: patches.getDeltas()) {
+            SharelatexDoc doc = new SharelatexDoc();
+            String newText;
+            String deletedText;
+            switch (delta.getType()) {
+                case EQUAL:
+                    pos += delta.getSource().size();
+                    break;
+                case INSERT:
+                    doc.setPosition(pos);
+                    newText = delta.getTarget().getLines().stream().collect(Collectors.joining("\n"));
+                    doc.setContent(newText);
+                    doc.setOperation("i");
+                    docsWithChanges.add(doc);
+                    pos += newText.length();
+                    break;
+                case DELETE:
+                    doc.setPosition(pos);
+                    deletedText = delta.getSource().getLines().stream().collect(Collectors.joining("\n"));
+                    doc.setContent(deletedText);
+                    doc.setOperation("d");
+                    docsWithChanges.add(doc);
+                    break;
+                case CHANGE:
+                    // CHANGE is delete and insert
 
-            if (d.operation == Operation.INSERT) {
-                SharelatexDoc doc = new SharelatexDoc();
-                doc.setPosition(pos);
-                doc.setContent(d.text);
-                doc.setOperation("i");
-                docsWithChanges.add(doc);
-                pos += d.text.length();
-            } else if (d.operation == Operation.DELETE) {
-                SharelatexDoc doc = new SharelatexDoc();
-                doc.setPosition(pos);
-                doc.setContent(d.text);
-                doc.setOperation("d");
+                    doc.setPosition(pos);
+                    deletedText = delta.getSource().getLines().stream().collect(Collectors.joining("\n"));
+                    doc.setContent(deletedText);
+                    doc.setOperation("d");
+                    docsWithChanges.add(doc);
 
-                docsWithChanges.add(doc);
-            } else if (d.operation == Operation.EQUAL) {
-                pos += d.text.length();
+                    doc.setPosition(pos);
+                    newText = delta.getTarget().getLines().stream().collect(Collectors.joining("\n"));
+                    doc.setContent(newText);
+                    doc.setOperation("i");
+                    docsWithChanges.add(doc);
+                    pos += newText.length();
+                    break;
+                default:
+                    LOGGER.error("Unknown delta type");
+                    break;
             }
         }
         return docsWithChanges;

@@ -12,13 +12,13 @@ import org.jabref.logic.importer.ImportFormatPreferences;
 import org.jabref.model.database.BibDatabaseContext;
 import org.jabref.model.util.FileUpdateMonitor;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.client.utils.URIBuilder;
-import org.json.JSONObject;
 import org.jsoup.Connection;
 import org.jsoup.Connection.Method;
 import org.jsoup.Jsoup;
@@ -39,6 +39,18 @@ public class SharelatexConnector {
     private String projectUrl;
     private final WebSocketClientWrapper client = new WebSocketClientWrapper();
 
+    private static final class AccessData {
+        public final String CsrfToken;
+        public final String User;
+        public final String Password;
+
+        private AccessData(String csrfToken, String user, String password) {
+            CsrfToken = csrfToken;
+            User = user;
+            Password = password;
+        }
+    }
+
     public String connectToServer(String serverUri, String user, String password) throws IOException {
 
         this.server = serverUri;
@@ -53,8 +65,9 @@ public class SharelatexConnector {
 
         csrfToken = welcomePage.select("input[name=_csrf]").attr("value");
 
-        String json = "{\"_csrf\":" + JSONObject.quote(csrfToken)
-                + ",\"email\":" + JSONObject.quote(user) + ",\"password\":" + JSONObject.quote(password) + "}";
+        AccessData accessData = new AccessData(csrfToken, user, password);
+        Gson gson = new Gson();
+        String json = gson.toJson(accessData);
 
         Connection.Response loginResponse = Jsoup.connect(loginUrl)
                 .header("Content-Type", contentType)

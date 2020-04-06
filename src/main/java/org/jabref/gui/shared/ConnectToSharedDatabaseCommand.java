@@ -4,7 +4,7 @@ import org.jabref.gui.JabRefFrame;
 import org.jabref.gui.actions.SimpleCommand;
 
 /**
- * Opens a shared database.
+ * Opens a shared SQL database
  */
 public class ConnectToSharedDatabaseCommand extends SimpleCommand {
 
