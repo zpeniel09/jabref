@@ -25,9 +25,9 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 
+import org.jabref.Globals;
 import org.jabref.gui.BasePanel;
 import org.jabref.gui.DialogService;
-import org.jabref.gui.GUIGlobals;
 import org.jabref.gui.StateManager;
 import org.jabref.gui.bibtexkeypattern.GenerateBibtexKeySingleAction;
 import org.jabref.gui.entryeditor.fileannotationtab.FileAnnotationTab;
@@ -38,7 +38,6 @@ import org.jabref.gui.keyboard.KeyBinding;
 import org.jabref.gui.menus.ChangeEntryTypeMenu;
 import org.jabref.gui.mergeentries.FetchAndMergeEntry;
 import org.jabref.gui.undo.CountingUndoManager;
-import org.jabref.gui.util.ColorUtil;
 import org.jabref.gui.util.DefaultTaskExecutor;
 import org.jabref.gui.util.TaskExecutor;
 import org.jabref.logic.TypedBibEntry;
@@ -50,7 +49,6 @@ import org.jabref.model.entry.BibEntry;
 import org.jabref.model.entry.field.Field;
 import org.jabref.model.util.FileUpdateMonitor;
 import org.jabref.preferences.PreferencesService;
-import org.jabref.preferences.PreviewPreferences;
 
 import com.airhacks.afterburner.views.ViewLoader;
 import org.fxmisc.easybind.EasyBind;
@@ -103,13 +101,6 @@ public class EntryEditor extends BorderPane {
         this.fileLinker = new ExternalFilesEntryLinker(externalFileTypes, preferencesService.getFilePreferences(),
                 databaseContext);
 
-        if (GUIGlobals.currentFont != null) {
-            setStyle(String.format("text-area-background: %s;text-area-foreground: %s;text-area-highlight: %s;",
-                    ColorUtil.toHex(GUIGlobals.validFieldBackgroundColor),
-                    ColorUtil.toHex(GUIGlobals.editorTextColor),
-                    ColorUtil.toHex(GUIGlobals.activeBackgroundColor)));
-        }
-
         EasyBind.subscribe(tabbed.getSelectionModel().selectedItemProperty(), tab -> {
             EntryEditorTab activeTab = (EntryEditorTab) tab;
             if (activeTab != null) {
@@ -134,58 +125,21 @@ public class EntryEditor extends BorderPane {
 
             if (event.getDragboard().hasContent(DataFormat.FILES)) {
                 List<Path> files = event.getDragboard().getFiles().stream().map(File::toPath).collect(Collectors.toList());
-                FileDragDropPreferenceType dragDropPreferencesType = preferencesService.getEntryEditorFileLinkPreference();
-
-                if (dragDropPreferencesType == FileDragDropPreferenceType.MOVE) {
-                    if (event.getTransferMode() == TransferMode.LINK) {
-                        // Alt on Windows
-                        LOGGER.debug("Mode LINK");
-                        fileLinker.addFilesToEntry(entry, files);
-                    } else if (event.getTransferMode() == TransferMode.COPY) {
-                        // Ctrl on Windows, no modifier on Xubuntu
+                switch (event.getTransferMode()) {
+                    case COPY:
                         LOGGER.debug("Mode COPY");
                         fileLinker.copyFilesToFileDirAndAddToEntry(entry, files);
-                    } else {
-                        // Shift on Windows or no modifier
+                        break;
+                    case MOVE:
                         LOGGER.debug("Mode MOVE");
                         fileLinker.moveFilesToFileDirAndAddToEntry(entry, files);
-                    }
-                    success = true;
-                }
-
-                if (dragDropPreferencesType == FileDragDropPreferenceType.COPY) {
-                    if (event.getTransferMode() == TransferMode.COPY) {
-                        // Ctrl on Windows, no modifier on Xubuntu
-                        LOGGER.debug("Mode MOVE");
-                        fileLinker.moveFilesToFileDirAndAddToEntry(entry, files);
-                    } else if (event.getTransferMode() == TransferMode.LINK) {
-                        // Alt on Windows
+                        break;
+                    case LINK:
                         LOGGER.debug("Mode LINK");
                         fileLinker.addFilesToEntry(entry, files);
-                    } else {
-                        // Shift on Windows or no modifier
-                        LOGGER.debug("Mode COPY");
-                        fileLinker.copyFilesToFileDirAndAddToEntry(entry, files);
-                    }
-                    success = true;
+                        break;
                 }
-
-                if (dragDropPreferencesType == FileDragDropPreferenceType.LINK) {
-                    if (event.getTransferMode() == TransferMode.COPY) {
-                        // Ctrl on Windows, no modifier on Xubuntu
-                        LOGGER.debug("Mode COPY");
-                        fileLinker.copyFilesToFileDirAndAddToEntry(entry, files);
-                    } else if (event.getTransferMode() == TransferMode.LINK) {
-                        // Alt on Windows
-                        LOGGER.debug("Mode MOVE");
-                        fileLinker.moveFilesToFileDirAndAddToEntry(entry, files);
-                    } else {
-                        // Shift on Windows or no modifier
-                        LOGGER.debug("Mode LINK");
-                        fileLinker.addFilesToEntry(entry, files);
-                    }
-                    success = true;
-                }
+                success = true;
             }
 
             event.setDropCompleted(success);
@@ -263,22 +217,23 @@ public class EntryEditor extends BorderPane {
     }
 
     private List<EntryEditorTab> createTabs() {
+        // Preview tab
+        entryEditorTabs.add(new PreviewTab(databaseContext, dialogService, Globals.prefs, ExternalFileTypes.getInstance()));
 
         // Required fields
-        entryEditorTabs.add(new RequiredFieldsTab(databaseContext, panel.getSuggestionProviders(), undoManager, dialogService));
+        entryEditorTabs.add(new RequiredFieldsTab(databaseContext, panel.getSuggestionProviders(), undoManager, dialogService, Globals.prefs, Globals.entryTypesManager, ExternalFileTypes.getInstance(), Globals.TASK_EXECUTOR, Globals.journalAbbreviationLoader));
 
         // Optional fields
-        entryEditorTabs.add(new OptionalFieldsTab(databaseContext, panel.getSuggestionProviders(), undoManager, dialogService));
-        entryEditorTabs.add(new OptionalFields2Tab(databaseContext, panel.getSuggestionProviders(), undoManager, dialogService));
-        entryEditorTabs.add(new DeprecatedFieldsTab(databaseContext, panel.getSuggestionProviders(), undoManager, dialogService));
+        entryEditorTabs.add(new OptionalFieldsTab(databaseContext, panel.getSuggestionProviders(), undoManager, dialogService, Globals.prefs, Globals.entryTypesManager, ExternalFileTypes.getInstance(), Globals.TASK_EXECUTOR, Globals.journalAbbreviationLoader));
+        entryEditorTabs.add(new OptionalFields2Tab(databaseContext, panel.getSuggestionProviders(), undoManager, dialogService, Globals.prefs, Globals.entryTypesManager, ExternalFileTypes.getInstance(), Globals.TASK_EXECUTOR, Globals.journalAbbreviationLoader));
+        entryEditorTabs.add(new DeprecatedFieldsTab(databaseContext, panel.getSuggestionProviders(), undoManager, dialogService, Globals.prefs, Globals.entryTypesManager, ExternalFileTypes.getInstance(), Globals.TASK_EXECUTOR, Globals.journalAbbreviationLoader));
 
         // Other fields
-        entryEditorTabs.add(new OtherFieldsTab(databaseContext, panel.getSuggestionProviders(), undoManager,
-                entryEditorPreferences.getCustomTabFieldNames(), dialogService));
+        entryEditorTabs.add(new OtherFieldsTab(databaseContext, panel.getSuggestionProviders(), undoManager, entryEditorPreferences.getCustomTabFieldNames(), dialogService, Globals.prefs, Globals.entryTypesManager, ExternalFileTypes.getInstance(), Globals.TASK_EXECUTOR, Globals.journalAbbreviationLoader));
 
         // General fields from preferences
         for (Map.Entry<String, Set<Field>> tab : entryEditorPreferences.getEntryEditorTabList().entrySet()) {
-            entryEditorTabs.add(new UserDefinedFieldsTab(tab.getKey(), tab.getValue(), databaseContext, panel.getSuggestionProviders(), undoManager, dialogService));
+            entryEditorTabs.add(new UserDefinedFieldsTab(tab.getKey(), tab.getValue(), databaseContext, panel.getSuggestionProviders(), undoManager, dialogService, Globals.prefs, Globals.entryTypesManager, ExternalFileTypes.getInstance(), Globals.TASK_EXECUTOR, Globals.journalAbbreviationLoader));
         }
 
         // Special tabs
@@ -288,8 +243,8 @@ public class EntryEditor extends BorderPane {
 
         // Source tab
         sourceTab = new SourceTab(databaseContext, undoManager,
-                entryEditorPreferences.getLatexFieldFormatterPreferences(),
-                entryEditorPreferences.getImportFormatPreferences(), fileMonitor, dialogService, stateManager);
+                entryEditorPreferences.getFieldWriterPreferences(),
+                entryEditorPreferences.getImportFormatPreferences(), fileMonitor, dialogService, stateManager, Globals.getKeyPrefs());
         entryEditorTabs.add(sourceTab);
 
         // LaTeX citations tab
@@ -404,11 +359,11 @@ public class EntryEditor extends BorderPane {
         });
     }
 
-    public void updatePreviewInTabs(PreviewPreferences previewPreferences) {
-        for (Tab tab : this.entryEditorTabs) {
-            if (tab instanceof FieldsEditorTab) {
-                ((FieldsEditorTab) tab).previewPanel.updateLayout(previewPreferences);
-            }
-        }
+    public void nextPreviewStyle() {
+        this.entryEditorTabs.forEach(EntryEditorTab::nextPreviewStyle);
+    }
+
+    public void previousPreviewStyle() {
+        this.entryEditorTabs.forEach(EntryEditorTab::previousPreviewStyle);
     }
 }

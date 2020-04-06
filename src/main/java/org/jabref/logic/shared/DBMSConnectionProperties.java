@@ -26,22 +26,50 @@ public class DBMSConnectionProperties implements DatabaseConnectionProperties {
     private String database;
     private String user;
     private String password;
+    private boolean allowPublicKeyRetrieval;
     private boolean useSSL;
-    private String serverTimezone;
+    private String serverTimezone = "";
 
-    //Not needed for connection, but stored for future login
+    // Not needed for connection, but stored for future login
     private String keyStore;
 
-    public DBMSConnectionProperties() {
-        // no data
-    }
-
+    /**
+     * Gets all required data from {@link SharedDatabasePreferences} and sets them if present.
+     */
     public DBMSConnectionProperties(SharedDatabasePreferences prefs) {
-        setFromPreferences(prefs);
+        if (prefs.getType().isPresent()) {
+            Optional<DBMSType> dbmsType = DBMSType.fromString(prefs.getType().get());
+            if (dbmsType.isPresent()) {
+                this.type = dbmsType.get();
+            }
+        }
+
+        prefs.getHost().ifPresent(theHost -> this.host = theHost);
+        prefs.getPort().ifPresent(thePort -> this.port = Integer.parseInt(thePort));
+        prefs.getName().ifPresent(theDatabase -> this.database = theDatabase);
+        prefs.getKeyStoreFile().ifPresent(theKeystore -> this.keyStore = theKeystore);
+        prefs.getServerTimezone().ifPresent(theServerTimezone -> this.serverTimezone = theServerTimezone);
+        this.useSSL = prefs.isUseSSL();
+
+        if (prefs.getUser().isPresent()) {
+            this.user = prefs.getUser().get();
+            if (prefs.getPassword().isPresent()) {
+                try {
+                    this.password = new Password(prefs.getPassword().get().toCharArray(), prefs.getUser().get()).decrypt();
+                } catch (UnsupportedEncodingException | GeneralSecurityException e) {
+                    LOGGER.error("Could not decrypt password", e);
+                }
+            }
+        }
+
+        if (!prefs.getPassword().isPresent()) {
+            // Some DBMS require a non-null value as a password (in case of using an empty string).
+            this.password = "";
+        }
     }
 
-    public DBMSConnectionProperties(DBMSType type, String host, int port, String database, String user,
-                                    String password, boolean useSSL, String serverTimezone) {
+    DBMSConnectionProperties(DBMSType type, String host, int port, String database, String user,
+                             String password, boolean useSSL, boolean allowPublicKeyRetrieval, String serverTimezone, String keyStore) {
         this.type = type;
         this.host = host;
         this.port = port;
@@ -49,7 +77,9 @@ public class DBMSConnectionProperties implements DatabaseConnectionProperties {
         this.user = user;
         this.password = password;
         this.useSSL = useSSL;
+        this.allowPublicKeyRetrieval = allowPublicKeyRetrieval;
         this.serverTimezone = serverTimezone;
+        this.keyStore = keyStore;
     }
 
     @Override
@@ -57,17 +87,9 @@ public class DBMSConnectionProperties implements DatabaseConnectionProperties {
         return type;
     }
 
-    public void setType(DBMSType type) {
-        this.type = type;
-    }
-
     @Override
     public String getHost() {
         return host;
-    }
-
-    public void setHost(String host) {
-        this.host = host;
     }
 
     @Override
@@ -75,17 +97,9 @@ public class DBMSConnectionProperties implements DatabaseConnectionProperties {
         return port;
     }
 
-    public void setPort(int port) {
-        this.port = port;
-    }
-
     @Override
     public String getDatabase() {
         return database;
-    }
-
-    public void setDatabase(String database) {
-        this.database = database;
     }
 
     @Override
@@ -93,17 +107,9 @@ public class DBMSConnectionProperties implements DatabaseConnectionProperties {
         return user;
     }
 
-    public void setUser(String user) {
-        this.user = user;
-    }
-
     @Override
     public String getPassword() {
         return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     @Override
@@ -111,21 +117,24 @@ public class DBMSConnectionProperties implements DatabaseConnectionProperties {
         return useSSL;
     }
 
-    public void setUseSSL(boolean useSSL) {
-        this.useSSL = useSSL;
-    }
-
-    public String getUrl() {
-        return type.getUrl(host, port, database);
+    @Override
+    public boolean isAllowPublicKeyRetrieval() {
+        return allowPublicKeyRetrieval;
     }
 
     @Override
-    public String getServerTimezone() { return serverTimezone; }
+    public String getServerTimezone() {
+        return serverTimezone;
+    }
 
-    public void setServerTimezone(String serverTimezone) { this.serverTimezone = serverTimezone; }
+    public String getUrl() {
+        String url = type.getUrl(host, port, database);
+        return url;
+    }
 
     /**
      * Returns username, password and ssl as Properties Object
+     *
      * @return Properties with values for user, password and ssl
      */
     public Properties asProperties() {
@@ -133,21 +142,19 @@ public class DBMSConnectionProperties implements DatabaseConnectionProperties {
         props.setProperty("user", user);
         props.setProperty("password", password);
         props.setProperty("serverTimezone", serverTimezone);
-
         if (useSSL) {
             props.setProperty("ssl", Boolean.toString(useSSL));
+            props.setProperty("useSSL", Boolean.toString(useSSL));
         }
-
+        if (allowPublicKeyRetrieval) {
+            props.setProperty("allowPublicKeyRetrieval", Boolean.toString(allowPublicKeyRetrieval));
+        }
         return props;
     }
 
     @Override
     public String getKeyStore() {
         return keyStore;
-    }
-
-    public void setKeyStore(String keyStore) {
-        this.keyStore = keyStore;
     }
 
     /**
@@ -164,13 +171,13 @@ public class DBMSConnectionProperties implements DatabaseConnectionProperties {
         }
         DBMSConnectionProperties properties = (DBMSConnectionProperties) obj;
         return Objects.equals(type, properties.getType())
-               && this.host.equalsIgnoreCase(properties.getHost())
-               && Objects.equals(port, properties.getPort())
-               && Objects.equals(database, properties.getDatabase())
-               && Objects.equals(user, properties.getUser())
-               && Objects.equals(useSSL, properties.isUseSSL())
-               && Objects.equals(serverTimezone, properties.getServerTimezone());
-
+                && this.host.equalsIgnoreCase(properties.getHost())
+                && Objects.equals(port, properties.getPort())
+                && Objects.equals(database, properties.getDatabase())
+                && Objects.equals(user, properties.getUser())
+                && Objects.equals(useSSL, properties.isUseSSL())
+                && Objects.equals(allowPublicKeyRetrieval, properties.isAllowPublicKeyRetrieval())
+                && Objects.equals(serverTimezone, properties.getServerTimezone());
     }
 
     @Override
@@ -178,49 +185,13 @@ public class DBMSConnectionProperties implements DatabaseConnectionProperties {
         return Objects.hash(type, host, port, database, user, useSSL);
     }
 
-    /**
-     *  Gets all required data from {@link SharedDatabasePreferences} and sets them if present.
-     */
-    private void setFromPreferences(SharedDatabasePreferences prefs) {
-        if (prefs.getType().isPresent()) {
-            Optional<DBMSType> dbmsType = DBMSType.fromString(prefs.getType().get());
-            if (dbmsType.isPresent()) {
-                this.type = dbmsType.get();
-            }
-        }
-
-        prefs.getHost().ifPresent(theHost -> this.host = theHost);
-        prefs.getPort().ifPresent(thePort -> this.port = Integer.parseInt(thePort));
-        prefs.getName().ifPresent(theDatabase -> this.database = theDatabase);
-        prefs.getKeyStoreFile().ifPresent(theKeystore -> this.keyStore = theKeystore);
-        prefs.getServerTimezone().ifPresent(theServerTimezone -> this.serverTimezone = theServerTimezone);
-        this.setUseSSL(prefs.isUseSSL());
-
-        if (prefs.getUser().isPresent()) {
-            this.user = prefs.getUser().get();
-            if (prefs.getPassword().isPresent()) {
-                try {
-                    this.password = new Password(prefs.getPassword().get().toCharArray(), prefs.getUser().get()).decrypt();
-                } catch (GeneralSecurityException e) {
-                    LOGGER.error("Could not decrypt password", e);
-                }
-            }
-        }
-
-        if (!prefs.getPassword().isPresent()) {
-            // Some DBMS require a non-null value as a password (in case of using an empty string).
-            this.password = "";
-        }
-    }
-
     @Override
     public boolean isValid() {
         return Objects.nonNull(type)
-               && Objects.nonNull(host)
-               && Objects.nonNull(port)
-               && Objects.nonNull(database)
-               && Objects.nonNull(user)
-               && Objects.nonNull(password);
+                && Objects.nonNull(host)
+                && Objects.nonNull(port)
+                && Objects.nonNull(database)
+                && Objects.nonNull(user)
+                && Objects.nonNull(password);
     }
-
 }

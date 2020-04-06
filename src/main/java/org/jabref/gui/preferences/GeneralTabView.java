@@ -15,6 +15,7 @@ import org.jabref.gui.actions.ActionFactory;
 import org.jabref.gui.actions.StandardActions;
 import org.jabref.gui.help.HelpAction;
 import org.jabref.gui.util.IconValidationDecorator;
+import org.jabref.gui.util.ViewModelListCellFactory;
 import org.jabref.logic.help.HelpFile;
 import org.jabref.logic.l10n.Language;
 import org.jabref.logic.l10n.Localization;
@@ -24,7 +25,7 @@ import org.jabref.preferences.JabRefPreferences;
 import com.airhacks.afterburner.views.ViewLoader;
 import de.saxsys.mvvmfx.utils.validation.visualization.ControlsFxVisualizer;
 
-public class GeneralTabView extends AbstractPreferenceTabView implements PreferencesTab {
+public class GeneralTabView extends AbstractPreferenceTabView<GeneralTabViewModel> implements PreferencesTab {
 
     @FXML private ComboBox<Language> language;
     @FXML private ComboBox<Charset> defaultEncoding;
@@ -63,48 +64,56 @@ public class GeneralTabView extends AbstractPreferenceTabView implements Prefere
     public String getTabName() { return Localization.lang("General"); }
 
     public void initialize() {
-        GeneralTabViewModel generalTabViewModel = new GeneralTabViewModel(dialogService, preferences);
-        this.viewModel = generalTabViewModel;
+        this.viewModel = new GeneralTabViewModel(dialogService, preferences);
 
-        language.itemsProperty().bind(generalTabViewModel.languagesListProperty());
-        language.valueProperty().bindBidirectional(generalTabViewModel.selectedLanguageProperty());
+        new ViewModelListCellFactory<Language>()
+                .withText(Language::getDisplayName)
+                .install(language);
+        language.itemsProperty().bind(viewModel.languagesListProperty());
+        language.valueProperty().bindBidirectional(viewModel.selectedLanguageProperty());
 
-        defaultEncoding.itemsProperty().bind(generalTabViewModel.encodingsListProperty());
-        defaultEncoding.valueProperty().bindBidirectional(generalTabViewModel.selectedEncodingProperty());
+        new ViewModelListCellFactory<Charset>()
+                .withText(Charset::displayName)
+                .install(defaultEncoding);
+        defaultEncoding.itemsProperty().bind(viewModel.encodingsListProperty());
+        defaultEncoding.valueProperty().bindBidirectional(viewModel.selectedEncodingProperty());
 
-        biblatexMode.itemsProperty().bind(generalTabViewModel.biblatexModeListProperty());
-        biblatexMode.valueProperty().bindBidirectional(generalTabViewModel.selectedBiblatexModeProperty());
+        new ViewModelListCellFactory<BibDatabaseMode>()
+                .withText(BibDatabaseMode::getFormattedName)
+                .install(biblatexMode);
+        biblatexMode.itemsProperty().bind(viewModel.biblatexModeListProperty());
+        biblatexMode.valueProperty().bindBidirectional(viewModel.selectedBiblatexModeProperty());
 
-        inspectionWarningDuplicate.selectedProperty().bindBidirectional(generalTabViewModel.inspectionWarningDuplicateProperty());
-        confirmDelete.selectedProperty().bindBidirectional(generalTabViewModel.confirmDeleteProperty());
-        enforceLegalKeys.selectedProperty().bindBidirectional(generalTabViewModel.enforceLegalKeysProperty());
-        allowIntegerEdition.selectedProperty().bindBidirectional(generalTabViewModel.allowIntegerEditionProperty());
-        memoryStickMode.selectedProperty().bindBidirectional(generalTabViewModel.memoryStickModeProperty());
-        collectTelemetry.selectedProperty().bindBidirectional(generalTabViewModel.collectTelemetryProperty());
-        showAdvancedHints.selectedProperty().bindBidirectional(generalTabViewModel.showAdvancedHintsProperty());
+        inspectionWarningDuplicate.selectedProperty().bindBidirectional(viewModel.inspectionWarningDuplicateProperty());
+        confirmDelete.selectedProperty().bindBidirectional(viewModel.confirmDeleteProperty());
+        enforceLegalKeys.selectedProperty().bindBidirectional(viewModel.enforceLegalKeysProperty());
+        allowIntegerEdition.selectedProperty().bindBidirectional(viewModel.allowIntegerEditionProperty());
+        memoryStickMode.selectedProperty().bindBidirectional(viewModel.memoryStickModeProperty());
+        collectTelemetry.selectedProperty().bindBidirectional(viewModel.collectTelemetryProperty());
+        showAdvancedHints.selectedProperty().bindBidirectional(viewModel.showAdvancedHintsProperty());
 
-        markOwner.selectedProperty().bindBidirectional(generalTabViewModel.markOwnerProperty());
-        markOwnerName.textProperty().bindBidirectional(generalTabViewModel.markOwnerNameProperty());
+        markOwner.selectedProperty().bindBidirectional(viewModel.markOwnerProperty());
+        markOwnerName.textProperty().bindBidirectional(viewModel.markOwnerNameProperty());
         markOwnerName.disableProperty().bind(markOwner.selectedProperty().not());
-        markOwnerOverwrite.selectedProperty().bindBidirectional(generalTabViewModel.markOwnerOverwriteProperty());
+        markOwnerOverwrite.selectedProperty().bindBidirectional(viewModel.markOwnerOverwriteProperty());
         markOwnerOverwrite.disableProperty().bind(markOwner.selectedProperty().not());
 
-        markTimestamp.selectedProperty().bindBidirectional(generalTabViewModel.markTimestampProperty());
+        markTimestamp.selectedProperty().bindBidirectional(viewModel.markTimestampProperty());
         markTimeStampFormatLabel.disableProperty().bind(markTimestamp.selectedProperty().not());
-        markTimeStampFormat.textProperty().bindBidirectional(generalTabViewModel.markTimeStampFormatProperty());
+        markTimeStampFormat.textProperty().bindBidirectional(viewModel.markTimeStampFormatProperty());
         markTimeStampFormat.disableProperty().bind(markTimestamp.selectedProperty().not());
-        markTimeStampOverwrite.selectedProperty().bindBidirectional(generalTabViewModel.markTimeStampOverwriteProperty());
+        markTimeStampOverwrite.selectedProperty().bindBidirectional(viewModel.markTimeStampOverwriteProperty());
         markTimeStampOverwrite.disableProperty().bind(markTimestamp.selectedProperty().not());
         markTimeStampFieldNameLabel.disableProperty().bind(markTimestamp.selectedProperty().not());
-        markTimeStampFieldName.textProperty().bindBidirectional(generalTabViewModel.markTimeStampFieldNameProperty());
+        markTimeStampFieldName.textProperty().bindBidirectional(viewModel.markTimeStampFieldNameProperty());
         markTimeStampFieldName.disableProperty().bind(markTimestamp.selectedProperty().not());
-        updateTimeStamp.selectedProperty().bindBidirectional(generalTabViewModel.updateTimeStampProperty());
+        updateTimeStamp.selectedProperty().bindBidirectional(viewModel.updateTimeStampProperty());
 
         ActionFactory actionFactory = new ActionFactory(Globals.getKeyPrefs());
         actionFactory.configureIconButton(StandardActions.HELP, new HelpAction(HelpFile.OWNER), markOwnerHelp);
         actionFactory.configureIconButton(StandardActions.HELP, new HelpAction(HelpFile.TIMESTAMP), markTimeStampHelp);
 
         validationVisualizer.setDecoration(new IconValidationDecorator());
-        Platform.runLater(() -> validationVisualizer.initVisualization(generalTabViewModel.markTimeStampFormatValidationStatus(), markTimeStampFormat));
+        Platform.runLater(() -> validationVisualizer.initVisualization(viewModel.markTimeStampFormatValidationStatus(), markTimeStampFormat));
     }
 }

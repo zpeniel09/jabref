@@ -122,6 +122,8 @@ public class OOBibStyle implements Comparable<OOBibStyle> {
     private File styleFile;
     private long styleFileModificationTime = Long.MIN_VALUE;
     private String localCopy;
+    private boolean isDefaultLayoutPresent;
+
     public OOBibStyle(File styleFile, LayoutFormatterPreferences prefs,
             Charset encoding) throws IOException {
         this.prefs = Objects.requireNonNull(prefs);
@@ -321,13 +323,11 @@ public class OOBibStyle implements Comparable<OOBibStyle> {
             }
 
         }
-
         // Set validity boolean based on whether we found anything interesting
         // in the file:
-        if (mode != BibStyleMode.NONE) {
+        if ((mode != BibStyleMode.NONE) && isDefaultLayoutPresent) {
             valid = true;
         }
-
     }
 
     /**
@@ -344,17 +344,16 @@ public class OOBibStyle implements Comparable<OOBibStyle> {
      * Parse a line providing bibliography structure information for an entry type.
      *
      * @param line The string containing the structure description.
-     * @throws IOException
      */
     private void handleStructureLine(String line) {
         int index = line.indexOf('=');
         if ((index > 0) && (index < (line.length() - 1))) {
             String formatString = line.substring(index + 1);
-            boolean setDefault = line.substring(0, index).equals(OOBibStyle.DEFAULT_MARK);
+            isDefaultLayoutPresent = line.substring(0, index).equals(OOBibStyle.DEFAULT_MARK);
             EntryType type = EntryTypeFactory.parse(line.substring(0, index));
             try {
                 Layout layout = new LayoutHelper(new StringReader(formatString), this.prefs).getLayoutFromText();
-                if (setDefault) {
+                if (isDefaultLayoutPresent) {
                     defaultBibLayout = layout;
                 } else {
                     bibLayout.put(type, layout);
@@ -370,7 +369,6 @@ public class OOBibStyle implements Comparable<OOBibStyle> {
      * Parse a line providing a property name and value.
      *
      * @param line The line containing the formatter names.
-     * @throws IOException
      */
     private void handlePropertiesLine(String line, Map<String, Object> map) {
         int index = line.indexOf('=');
@@ -394,9 +392,6 @@ public class OOBibStyle implements Comparable<OOBibStyle> {
 
     /**
      * Parse a line providing a journal name for which this style is valid.
-     *
-     * @param line
-     * @throws IOException
      */
     private void handleJournalsLine(String line) {
         if (!line.trim().isEmpty()) {
@@ -848,7 +843,7 @@ public class OOBibStyle implements Comparable<OOBibStyle> {
      *
      * @return True if an internal style
      */
-    public boolean isFromResource() {
+    public boolean isInternalStyle() {
         return fromResource;
     }
 

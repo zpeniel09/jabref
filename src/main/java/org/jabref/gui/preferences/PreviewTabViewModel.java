@@ -27,22 +27,23 @@ import org.jabref.JabRefGUI;
 import org.jabref.gui.BasePanel;
 import org.jabref.gui.DialogService;
 import org.jabref.gui.DragAndDropDataFormats;
-import org.jabref.gui.GUIGlobals;
+import org.jabref.gui.StateManager;
 import org.jabref.gui.util.BackgroundTask;
 import org.jabref.gui.util.CustomLocalDragboard;
 import org.jabref.gui.util.NoSelectionModel;
 import org.jabref.gui.util.TaskExecutor;
 import org.jabref.logic.citationstyle.CitationStyle;
 import org.jabref.logic.citationstyle.CitationStylePreviewLayout;
-import org.jabref.logic.citationstyle.PreviewLayout;
-import org.jabref.logic.citationstyle.TextBasedPreviewLayout;
 import org.jabref.logic.l10n.Localization;
+import org.jabref.logic.layout.TextBasedPreviewLayout;
+import org.jabref.logic.preview.PreviewLayout;
 import org.jabref.preferences.JabRefPreferences;
 import org.jabref.preferences.PreviewPreferences;
 
 import de.saxsys.mvvmfx.utils.validation.FunctionBasedValidator;
 import de.saxsys.mvvmfx.utils.validation.ValidationMessage;
 import de.saxsys.mvvmfx.utils.validation.ValidationStatus;
+import de.saxsys.mvvmfx.utils.validation.Validator;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
 import org.slf4j.Logger;
@@ -56,29 +57,24 @@ public class PreviewTabViewModel implements PreferenceTabViewModel {
     private final ObjectProperty<MultipleSelectionModel<PreviewLayout>> availableSelectionModelProperty = new SimpleObjectProperty<>(new NoSelectionModel<>());
     private final ListProperty<PreviewLayout> chosenListProperty = new SimpleListProperty<>(FXCollections.observableArrayList());
     private final ObjectProperty<MultipleSelectionModel<PreviewLayout>> chosenSelectionModelProperty = new SimpleObjectProperty<>(new NoSelectionModel<>());
-
+    private final BooleanProperty showAsExtraTab = new SimpleBooleanProperty(false);
     private final BooleanProperty selectedIsEditableProperty = new SimpleBooleanProperty(false);
-
     private final ObjectProperty<PreviewLayout> layoutProperty = new SimpleObjectProperty<>();
     private final StringProperty sourceTextProperty = new SimpleStringProperty("");
-
-    private FunctionBasedValidator chosenListValidator;
-
     private final DialogService dialogService;
     private final JabRefPreferences preferences;
     private final PreviewPreferences previewPreferences;
     private final TaskExecutor taskExecutor;
-
+    private final CustomLocalDragboard localDragboard;
+    private Validator chosenListValidator;
     private ListProperty<PreviewLayout> dragSourceList = null;
-    private final CustomLocalDragboard localDragboard = GUIGlobals.localDragboard;
 
-    public PreviewTabViewModel(DialogService dialogService, JabRefPreferences preferences, TaskExecutor taskExecutor) {
+    public PreviewTabViewModel(DialogService dialogService, JabRefPreferences preferences, TaskExecutor taskExecutor, StateManager stateManager) {
         this.dialogService = dialogService;
         this.preferences = preferences;
         this.taskExecutor = taskExecutor;
+        this.localDragboard = stateManager.getLocalDragboard();
         previewPreferences = preferences.getPreviewPreferences();
-
-        setValues();
 
         sourceTextProperty.addListener((observable, oldValue, newValue) -> {
             if (getCurrentLayout() instanceof TextBasedPreviewLayout) {
@@ -98,7 +94,12 @@ public class PreviewTabViewModel implements PreferenceTabViewModel {
         );
     }
 
+    public BooleanProperty showAsExtraTabProperty() {
+        return showAsExtraTab;
+    }
+
     public void setValues() {
+        showAsExtraTab.set(previewPreferences.showPreviewAsExtraTab());
         chosenListProperty().getValue().clear();
         chosenListProperty.getValue().addAll(previewPreferences.getPreviewCycle());
 
@@ -189,6 +190,7 @@ public class PreviewTabViewModel implements PreferenceTabViewModel {
         PreviewPreferences newPreviewPreferences = preferences.getPreviewPreferences()
                                                               .getBuilder()
                                                               .withPreviewCycle(chosenListProperty)
+                                                              .withShowAsExtraTab(showAsExtraTab.getValue())
                                                               .withPreviewStyle(((TextBasedPreviewLayout) previewStyle).getText())
                                                               .build();
 

@@ -47,17 +47,11 @@ public class StyleSelectDialogViewModel {
         styles.addAll(loadStyles());
 
         String currentStyle = preferences.getCurrentStyle();
-        Optional<StyleSelectItemViewModel> lastUsedStyle = styles.stream().filter(style -> style.getStylePath().equals(currentStyle)).findFirst();
-
-        if (lastUsedStyle.isPresent()) {
-            selectedItem.setValue(lastUsedStyle.get());
-        } else {
-            selectedItem.setValue(styles.get(0));
-        }
+        selectedItem.setValue(getStyleOrDefault(currentStyle));
     }
 
     public StyleSelectItemViewModel fromOOBibStyle(OOBibStyle style) {
-        return new StyleSelectItemViewModel(style.getName(), String.join(", ", style.getJournals()), style.isFromResource() ? Localization.lang("Internal style") : style.getPath(), style);
+        return new StyleSelectItemViewModel(style.getName(), String.join(", ", style.getJournals()), style.isInternalStyle() ? Localization.lang("Internal style") : style.getPath(), style);
     }
 
     public OOBibStyle toOOBibStyle(StyleSelectItemViewModel item) {
@@ -75,6 +69,7 @@ public class StyleSelectDialogViewModel {
             if (loader.addStyleIfValid(stylePath)) {
                 preferences.setCurrentStyle(stylePath);
                 styles.setAll(loadStyles());
+                selectedItem.setValue(getStyleOrDefault(stylePath));
             } else {
                 dialogService.showErrorDialogAndWait(Localization.lang("Invalid style selected"), Localization.lang("You must select a valid style file."));
             }
@@ -99,9 +94,7 @@ public class StyleSelectDialogViewModel {
 
     public void editStyle() {
         OOBibStyle style = selectedItem.getValue().getStyle();
-
         Optional<ExternalFileType> type = ExternalFileTypes.getInstance().getExternalFileTypeByExt("jstyle");
-
         try {
             JabRefDesktop.openExternalFileAnyFormat(new BibDatabaseContext(), style.getPath(), type);
         } catch (IOException e) {
@@ -110,7 +103,6 @@ public class StyleSelectDialogViewModel {
     }
 
     public void viewStyle(StyleSelectItemViewModel item) {
-
         DialogPane pane = new DialogPane();
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToHeight(true);
@@ -126,7 +118,13 @@ public class StyleSelectDialogViewModel {
     }
 
     public void storePrefs() {
+        List<String> externalStyles = styles.stream().map(this::toOOBibStyle).filter(style->!style.isInternalStyle()).map(OOBibStyle::getPath).collect(Collectors.toList());
+        preferences.setExternalStyles(externalStyles);
         preferences.setCurrentStyle(selectedItem.getValue().getStylePath());
         preferencesService.setOpenOfficePreferences(preferences);
+    }
+
+    private StyleSelectItemViewModel getStyleOrDefault(String stylePath) {
+        return styles.stream().filter(style -> style.getStylePath().equals(stylePath)).findFirst().orElse(styles.get(0));
     }
 }

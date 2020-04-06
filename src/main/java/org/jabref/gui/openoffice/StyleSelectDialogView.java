@@ -18,12 +18,13 @@ import org.jabref.gui.preview.PreviewViewer;
 import org.jabref.gui.util.BaseDialog;
 import org.jabref.gui.util.ValueTableCellFactory;
 import org.jabref.gui.util.ViewModelTableRowFactory;
-import org.jabref.logic.citationstyle.TextBasedPreviewLayout;
 import org.jabref.logic.l10n.Localization;
+import org.jabref.logic.layout.TextBasedPreviewLayout;
 import org.jabref.logic.openoffice.OOBibStyle;
 import org.jabref.logic.openoffice.StyleLoader;
 import org.jabref.logic.util.TestEntry;
 import org.jabref.model.database.BibDatabaseContext;
+import org.jabref.model.entry.types.StandardEntryType;
 import org.jabref.preferences.PreferencesService;
 
 import com.airhacks.afterburner.views.ViewLoader;
@@ -77,6 +78,9 @@ public class StyleSelectDialogView extends BaseDialog<OOBibStyle> {
         previewBook.setEntry(TestEntry.getTestEntryBook());
         vbox.getChildren().add(previewBook);
 
+        previewArticle.setTheme(preferencesService.getTheme());
+        previewBook.setTheme(preferencesService.getTheme());
+
         colName.setCellValueFactory(cellData -> cellData.getValue().nameProperty());
         colJournals.setCellValueFactory(cellData -> cellData.getValue().journalsProperty());
         colFile.setCellValueFactory(cellData -> cellData.getValue().fileProperty());
@@ -118,8 +122,8 @@ public class StyleSelectDialogView extends BaseDialog<OOBibStyle> {
 
         EasyBind.subscribe(viewModel.selectedItemProperty(), style -> {
             tvStyles.getSelectionModel().select(style);
-            previewArticle.setLayout(new TextBasedPreviewLayout(style.getStyle().getDefaultBibLayout()));
-            previewBook.setLayout(new TextBasedPreviewLayout(style.getStyle().getDefaultBibLayout()));
+            previewArticle.setLayout(new TextBasedPreviewLayout(style.getStyle().getReferenceFormat(StandardEntryType.Article)));
+            previewBook.setLayout(new TextBasedPreviewLayout(style.getStyle().getReferenceFormat(StandardEntryType.Book)));
         });
     }
 

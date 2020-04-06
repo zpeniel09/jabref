@@ -18,12 +18,12 @@ public class FieldChangedEvent extends EntryChangedEvent {
     /**
      * @param bibEntry  Affected BibEntry object
      * @param field Name of field which has been changed
+     * @param oldValue  old field value
      * @param newValue  new field value
-     * @param newValue  old field value
      * @param location  location Location affected by this event
      */
     public FieldChangedEvent(BibEntry bibEntry, Field field, String newValue, String oldValue,
-                             EntryEventSource location) {
+                             EntriesEventSource location) {
         super(bibEntry, location);
         this.field = field;
         this.newValue = newValue;
@@ -45,12 +45,9 @@ public class FieldChangedEvent extends EntryChangedEvent {
     }
 
     /**
-     * @param bibEntry  Affected BibEntry object
-     * @param fieldName Name of field which has been changed
-     * @param newValue  new field value
      * @param location  location Location affected by this event
      */
-    public FieldChangedEvent(FieldChange fieldChange, EntryEventSource location) {
+    public FieldChangedEvent(FieldChange fieldChange, EntriesEventSource location) {
         super(fieldChange.getEntry(), location);
         this.field = fieldChange.getField();
         this.newValue = fieldChange.getNewValue();
@@ -59,7 +56,7 @@ public class FieldChangedEvent extends EntryChangedEvent {
     }
 
     public FieldChangedEvent(FieldChange fieldChange) {
-        this(fieldChange, EntryEventSource.LOCAL);
+        this(fieldChange, EntriesEventSource.LOCAL);
     }
 
     private int computeDelta(String oldValue, String newValue) {

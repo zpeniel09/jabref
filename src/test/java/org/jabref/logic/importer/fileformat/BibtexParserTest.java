@@ -26,6 +26,7 @@ import org.jabref.model.entry.BibEntry;
 import org.jabref.model.entry.BibEntryType;
 import org.jabref.model.entry.BibtexString;
 import org.jabref.model.entry.Date;
+import org.jabref.model.entry.Month;
 import org.jabref.model.entry.field.BibField;
 import org.jabref.model.entry.field.FieldPriority;
 import org.jabref.model.entry.field.InternalField;
@@ -1104,7 +1105,7 @@ class BibtexParserTest {
 
     @Test
     void parsePreservesMultipleSpacesInNonWrappableField() throws IOException {
-        when(importFormatPreferences.getFieldContentParserPreferences().getNonWrappableFields())
+        when(importFormatPreferences.getFieldContentFormatterPreferences().getNonWrappableFields())
                 .thenReturn(Collections.singletonList(StandardField.FILE));
         BibtexParser parser = new BibtexParser(importFormatPreferences, fileMonitor);
         ParserResult result = parser
@@ -1139,7 +1140,7 @@ class BibtexParserTest {
     @Test
     void parseHandlesAccentsCorrectly() throws IOException {
         ParserResult result = parser
-                .parse(new StringReader("@article{test,author = {H\'{e}lne Fiaux}}"));
+                .parse(new StringReader("@article{test,author = {H'{e}lne Fiaux}}"));
 
         Collection<BibEntry> parsedEntries = result.getDatabase().getEntries();
         BibEntry parsedEntry = parsedEntries.iterator().next();
@@ -1148,7 +1149,7 @@ class BibtexParserTest {
         assertEquals(1, parsedEntries.size());
         assertEquals(StandardEntryType.Article, parsedEntry.getType());
         assertEquals(Optional.of("test"), parsedEntry.getCiteKeyOptional());
-        assertEquals(Optional.of("H\'{e}lne Fiaux"), parsedEntry.getField(StandardField.AUTHOR));
+        assertEquals(Optional.of("H'{e}lne Fiaux"), parsedEntry.getField(StandardField.AUTHOR));
     }
 
     /**
@@ -1157,7 +1158,7 @@ class BibtexParserTest {
     @Test
     void parsePreambleAndEntryWithoutNewLine() throws IOException {
         ParserResult result = parser
-                .parse(new StringReader("@preamble{some text and \\latex}@article{test,author = {H\'{e}lne Fiaux}}"));
+                .parse(new StringReader("@preamble{some text and \\latex}@article{test,author = {H'{e}lne Fiaux}}"));
 
         Collection<BibEntry> parsedEntries = result.getDatabase().getEntries();
         BibEntry parsedEntry = parsedEntries.iterator().next();
@@ -1167,7 +1168,7 @@ class BibtexParserTest {
         assertEquals(1, parsedEntries.size());
         assertEquals(StandardEntryType.Article, parsedEntry.getType());
         assertEquals(Optional.of("test"), parsedEntry.getCiteKeyOptional());
-        assertEquals(Optional.of("H\'{e}lne Fiaux"), parsedEntry.getField(StandardField.AUTHOR));
+        assertEquals(Optional.of("H'{e}lne Fiaux"), parsedEntry.getField(StandardField.AUTHOR));
     }
 
     @Test
@@ -1488,7 +1489,7 @@ class BibtexParserTest {
 
         assertEquals("\\Literature\\", result.getMetaData().getDefaultFileDirectory().get());
         assertEquals("D:\\Documents", result.getMetaData().getUserFileDirectory("defaultOwner-user").get());
-        assertEquals("D:\\Latex", result.getMetaData().getLaTexFileDirectory("defaultOwner-user").get().toString());
+        assertEquals("D:\\Latex", result.getMetaData().getLatexFileDirectory("defaultOwner-user").get().toString());
     }
 
     @Test
@@ -1710,5 +1711,84 @@ class BibtexParserTest {
         Optional<BibEntry> result = parser.parseSingleEntry("@ARTICLE{HipKro03, year = {2003} }");
 
         assertEquals(new Date(2003), result.get().getPublicationDate().get());
+    }
+
+    @Test
+    void parseEntryUsingStringConstantsForTwoAuthorsWithEtAsStringConstant() throws ParseException {
+        // source of the example: https://docs.jabref.org/fields/strings
+        Collection<BibEntry> parsed = parser
+                .parseEntries("@String { kopp = \"Kopp, Oliver\" }" +
+                        "@String { kubovy = \"Kubovy, Jan\" }" +
+                        "@String { et = \" and \" }" +
+                        "@Misc{m1, author = kopp # et # kubovy }" );
+
+        BibEntry expectedEntry = new BibEntry(StandardEntryType.Misc)
+                .withCiteKey("m1")
+                .withField(StandardField.AUTHOR, "#kopp##et##kubovy#");
+
+        assertEquals(List.of(expectedEntry), parsed);
+    }
+
+    @Test
+    void parseStringConstantsForTwoAuthorsHasCorrectBibTeXEntry() throws ParseException {
+        // source of the example: https://docs.jabref.org/fields/strings
+        Collection<BibEntry> parsed = parser
+                .parseEntries("@String { kopp = \"Kopp, Oliver\" }" +
+                        "@String { kubovy = \"Kubovy, Jan\" }" +
+                        "@String { et = \" and \" }" +
+                        "@Misc{m2, author = kopp # \" and \" # kubovy }" );
+
+        BibEntry expectedEntry = new BibEntry(StandardEntryType.Misc)
+                .withCiteKey("m2")
+                .withField(StandardField.AUTHOR, "#kopp# and #kubovy#");
+
+        assertEquals(List.of(expectedEntry), parsed);
+    }
+
+    @Test
+    void parseStringConstantsForTwoAuthors() throws ParseException {
+        // source of the example: https://docs.jabref.org/fields/strings
+        Collection<BibEntry> parsed = parser
+                .parseEntries("@String { kopp = \"Kopp, Oliver\" }" +
+                        "@String { kubovy = \"Kubovy, Jan\" }" +
+                        "@String { et = \" and \" }" +
+                        "@Misc{m2, author = kopp # \" and \" # kubovy }" );
+
+        assertEquals("#kopp# and #kubovy#", parsed.iterator().next().getField(StandardField.AUTHOR).get());
+    }
+
+    @Test
+    void textAprilIsParsedAsMonthApril() throws ParseException {
+        Optional<BibEntry> result = parser.parseSingleEntry("@Misc{m, month = \"apr\" }" );
+
+        assertEquals(Month.APRIL, result.get().getMonth().get());
+    }
+
+    @Test
+    void textAprilIsDisplayedAsConstant() throws ParseException {
+        Optional<BibEntry> result = parser.parseSingleEntry("@Misc{m, month = \"apr\" }" );
+
+        assertEquals("apr", result.get().getField(StandardField.MONTH).get());
+    }
+
+    @Test
+    void bibTeXConstantAprilIsParsedAsMonthApril() throws ParseException {
+        Optional<BibEntry> result = parser.parseSingleEntry("@Misc{m, month = apr }" );
+
+        assertEquals(Month.APRIL, result.get().getMonth().get());
+    }
+
+    @Test
+    void bibTeXConstantAprilIsDisplayedAsConstant() throws ParseException {
+        Optional<BibEntry> result = parser.parseSingleEntry("@Misc{m, month = apr }" );
+
+        assertEquals("#apr#", result.get().getField(StandardField.MONTH).get());
+    }
+
+    @Test
+    void bibTeXConstantAprilIsParsedAsStringMonthAprilWhenReadingTheField() throws ParseException {
+        Optional<BibEntry> result = parser.parseSingleEntry("@Misc{m, month = apr }" );
+
+        assertEquals(Optional.of("#apr#"), result.get().getField(StandardField.MONTH));
     }
 }

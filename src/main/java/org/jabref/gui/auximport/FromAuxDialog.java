@@ -20,7 +20,6 @@ import org.jabref.gui.util.FileDialogConfiguration;
 import org.jabref.logic.auxparser.DefaultAuxParser;
 import org.jabref.logic.l10n.Localization;
 import org.jabref.logic.util.StandardFileType;
-import org.jabref.model.Defaults;
 import org.jabref.model.auxparser.AuxParser;
 import org.jabref.model.auxparser.AuxParserResult;
 import org.jabref.model.database.BibDatabase;
@@ -59,10 +58,8 @@ public class FromAuxDialog extends BaseDialog<Void> {
         generateButton.defaultButtonProperty().bind(generateButton.disableProperty().not());
         setResultConverter(button -> {
             if (button == generateButtonType) {
-                Defaults defaults = new Defaults(Globals.prefs.getDefaultBibDatabaseMode());
-                BasePanel bp = new BasePanel(frame, BasePanelPreferences.from(Globals.prefs), new BibDatabaseContext(auxParserResult.getGeneratedBibDatabase(), defaults), ExternalFileTypes.getInstance());
+                BasePanel bp = new BasePanel(frame, BasePanelPreferences.from(Globals.prefs), new BibDatabaseContext(auxParserResult.getGeneratedBibDatabase()), ExternalFileTypes.getInstance());
                 frame.addTab(bp, true);
-                dialogService.notify(Localization.lang("New library created."));
             }
             return null;
         });

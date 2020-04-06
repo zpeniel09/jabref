@@ -12,7 +12,7 @@ import javafx.scene.layout.HBox;
 import org.jabref.gui.DialogService;
 import org.jabref.gui.autocompleter.AutoCompleteSuggestionProvider;
 import org.jabref.gui.fieldeditors.contextmenu.EditorMenus;
-import org.jabref.logic.formatter.bibtexfields.CleanupURLFormatter;
+import org.jabref.logic.formatter.bibtexfields.CleanupUrlFormatter;
 import org.jabref.logic.formatter.bibtexfields.TrimWhitespaceFormatter;
 import org.jabref.logic.integrity.FieldCheckers;
 import org.jabref.model.entry.BibEntry;
@@ -30,17 +30,15 @@ public class UrlEditor extends HBox implements FieldEditorFX {
         this.viewModel = new UrlEditorViewModel(field, suggestionProvider, dialogService, fieldCheckers);
 
         ViewLoader.view(this)
-                .root(this)
-                .load();
+                  .root(this)
+                  .load();
 
         textArea.textProperty().bindBidirectional(viewModel.textProperty());
-        Supplier<List<MenuItem>> contextMenuSupplier = EditorMenus.getCleanupURLMenu(textArea);
+        Supplier<List<MenuItem>> contextMenuSupplier = EditorMenus.getCleanupUrlMenu(textArea);
         textArea.addToContextMenu(contextMenuSupplier);
 
-        // init paste handler for URLEditor to format pasted url link in textArea
-        textArea.setPasteActionHandler(()->
-        textArea.setText(new CleanupURLFormatter().format(new TrimWhitespaceFormatter().format(textArea.getText()))));
-
+        // init paste handler for UrlEditor to format pasted url link in textArea
+        textArea.setPasteActionHandler(() -> textArea.setText(new CleanupUrlFormatter().format(new TrimWhitespaceFormatter().format(textArea.getText()))));
 
         new EditorValidator(preferences).configureValidation(viewModel.getFieldValidator().getValidationStatus(), textArea);
     }

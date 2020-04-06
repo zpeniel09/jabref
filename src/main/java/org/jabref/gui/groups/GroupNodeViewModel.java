@@ -24,9 +24,11 @@ import org.jabref.gui.icon.JabRefIcon;
 import org.jabref.gui.util.BackgroundTask;
 import org.jabref.gui.util.BindingsHelper;
 import org.jabref.gui.util.CustomLocalDragboard;
+import org.jabref.gui.util.DroppingMouseLocation;
 import org.jabref.gui.util.TaskExecutor;
 import org.jabref.logic.groups.DefaultGroupsFactory;
 import org.jabref.logic.layout.format.LatexToUnicodeFormatter;
+import org.jabref.logic.util.DelayTaskThrottler;
 import org.jabref.model.FieldChange;
 import org.jabref.model.database.BibDatabaseContext;
 import org.jabref.model.entry.BibEntry;
@@ -56,6 +58,7 @@ public class GroupNodeViewModel {
     private final TaskExecutor taskExecutor;
     private final CustomLocalDragboard localDragBoard;
     private final ObservableList<BibEntry> entriesList;
+    private final DelayTaskThrottler throttler;
 
     public GroupNodeViewModel(BibDatabaseContext databaseContext, StateManager stateManager, TaskExecutor taskExecutor, GroupTreeNode groupNode, CustomLocalDragboard localDragBoard) {
         this.databaseContext = Objects.requireNonNull(databaseContext);
@@ -88,6 +91,7 @@ public class GroupNodeViewModel {
         // The wrapper created by the FXCollections will set a weak listener on the wrapped list. This weak listener gets garbage collected. Hence, we need to maintain a reference to this list.
         entriesList = databaseContext.getDatabase().getEntries();
         entriesList.addListener(this::onDatabaseChanged);
+        throttler = taskExecutor.createThrottler(1000);
 
         ObservableList<Boolean> selectedEntriesMatchStatus = EasyBind.map(stateManager.getSelectedEntries(), groupNode::matches);
         anySelectedEntriesMatched = BindingsHelper.any(selectedEntriesMatchStatus, matched -> matched);
@@ -113,8 +117,13 @@ public class GroupNodeViewModel {
         //    return; // user aborted operation
         //}
 
-        return groupNode.addEntriesToGroup(entries);
+        var changes = groupNode.addEntriesToGroup(entries);
 
+        // Update appearance of group
+        anySelectedEntriesMatched.invalidate();
+        allSelectedEntriesMatched.invalidate();
+
+        return changes;
         // TODO: Store undo
         // if (!undo.isEmpty()) {
         // groupSelector.concludeAssignment(UndoableChangeEntriesOfGroup.getUndoableEdit(target, undo), target.getNode(), assignedEntries);
@@ -191,12 +200,8 @@ public class GroupNodeViewModel {
     }
 
     private JabRefIcon createDefaultIcon() {
-        Optional<Color> color = groupNode.getGroup().getColor();
-        if (color.isPresent()) {
-            return IconTheme.JabRefIcons.DEFAULT_GROUP_ICON_COLORED.withColor(color.get());
-        } else {
-            return IconTheme.JabRefIcons.DEFAULT_GROUP_ICON_COLORED.withColor(Color.web("#8a8a8a"));
-        }
+        Color color = groupNode.getGroup().getColor().orElse(IconTheme.getDefaultGroupColor());
+        return IconTheme.JabRefIcons.DEFAULT_GROUP_ICON_COLORED.withColor(color);
     }
 
     private Optional<JabRefIcon> parseIcon(String iconCode) {
@@ -217,7 +222,7 @@ public class GroupNodeViewModel {
      * Gets invoked if an entry in the current database changes.
      */
     private void onDatabaseChanged(ListChangeListener.Change<? extends BibEntry> change) {
-        calculateNumberOfMatches();
+        throttler.schedule(this::calculateNumberOfMatches);
     }
 
     private void calculateNumberOfMatches() {
@@ -243,7 +248,7 @@ public class GroupNodeViewModel {
     }
 
     public Color getColor() {
-        return groupNode.getGroup().getColor().orElse(IconTheme.getDefaultColor());
+        return groupNode.getGroup().getColor().orElse(IconTheme.getDefaultGroupColor());
     }
 
     public String getPath() {
@@ -263,8 +268,7 @@ public class GroupNodeViewModel {
     public boolean acceptableDrop(Dragboard dragboard) {
         // TODO: we should also check isNodeDescendant
         boolean canDropOtherGroup = dragboard.hasContent(DragAndDropDataFormats.GROUP);
-        boolean canDropEntries = localDragBoard.hasType(DragAndDropDataFormats.BIBENTRY_LIST_CLASS)
-                && (groupNode.getGroup() instanceof GroupEntryChanger);
+        boolean canDropEntries = localDragBoard.hasBibEntries() && (groupNode.getGroup() instanceof GroupEntryChanger);
         return canDropOtherGroup || canDropEntries;
     }
 
@@ -288,10 +292,14 @@ public class GroupNodeViewModel {
     }
 
     public void draggedOn(GroupNodeViewModel target, DroppingMouseLocation mouseLocation) {
+        // No action, if the target is the same as the source
+        if (this.equals(target)) {
+            return;
+        }
+
         Optional<GroupTreeNode> targetParent = target.getParent();
         if (targetParent.isPresent()) {
             int targetIndex = target.getPositionInParent();
-
             // In case we want to move an item in the same parent
             // and the item is moved down, we need to adjust the target index
             if (targetParent.equals(getParent())) {

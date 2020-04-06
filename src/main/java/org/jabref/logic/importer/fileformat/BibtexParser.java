@@ -20,7 +20,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import org.jabref.logic.bibtex.FieldContentParser;
+import org.jabref.logic.bibtex.FieldContentFormatter;
 import org.jabref.logic.exporter.BibtexDatabaseWriter;
 import org.jabref.logic.exporter.SavePreferences;
 import org.jabref.logic.importer.ImportFormatPreferences;
@@ -65,7 +65,7 @@ public class BibtexParser implements Parser {
     private static final Logger LOGGER = LoggerFactory.getLogger(BibtexParser.class);
 
     private static final Integer LOOKAHEAD = 64;
-    private final FieldContentParser fieldContentParser;
+    private final FieldContentFormatter fieldContentFormatter;
     private final Deque<Character> pureTextFromFile = new LinkedList<>();
     private final ImportFormatPreferences importFormatPreferences;
     private PushbackReader pushbackReader;
@@ -78,7 +78,7 @@ public class BibtexParser implements Parser {
 
     public BibtexParser(ImportFormatPreferences importFormatPreferences, FileUpdateMonitor fileMonitor) {
         this.importFormatPreferences = Objects.requireNonNull(importFormatPreferences);
-        fieldContentParser = new FieldContentParser(importFormatPreferences.getFieldContentParserPreferences());
+        fieldContentFormatter = new FieldContentFormatter(importFormatPreferences.getFieldContentFormatterPreferences());
         metaDataParser = new MetaDataParser(fileMonitor);
     }
 
@@ -233,12 +233,6 @@ public class BibtexParser implements Parser {
     }
 
     private void parseAndAddEntry(String type) {
-        /**
-         * Morten Alver 13 Aug 2006: Trying to make the parser more
-         * robust. If an exception is thrown when parsing an entry,
-         * drop the entry and try to resume parsing. Add a warning
-         * for the user.
-         */
         try {
             // collect all comments and the entry type definition in front of the actual entry
             // this is at least `@Type`
@@ -256,10 +250,12 @@ public class BibtexParser implements Parser {
                 parserResult.addDuplicateKey(entry.getCiteKey());
             }
         } catch (IOException ex) {
+            // Trying to make the parser more robust.
+            // If an exception is thrown when parsing an entry, drop the entry and try to resume parsing.
+
             LOGGER.debug("Could not parse entry", ex);
             parserResult.addWarning(Localization.lang("Error occurred when parsing entry") + ": '" + ex.getMessage()
                     + "'. " + Localization.lang("Skipped entry."));
-
         }
     }
 
@@ -593,20 +589,18 @@ public class BibtexParser implements Parser {
         int character;
 
         while (((character = peek()) != ',') && (character != '}') && (character != ')')) {
-
             if (eof) {
                 throw new IOException("Error in line " + line + ": EOF in mid-string");
             }
             if (character == '"') {
                 StringBuilder text = parseQuotedFieldExactly();
-                value.append(fieldContentParser.format(text, field));
+                value.append(fieldContentFormatter.format(text, field));
             } else if (character == '{') {
                 // Value is a string enclosed in brackets. There can be pairs
                 // of brackets inside of a field, so we need to count the
                 // brackets to know when the string is finished.
                 StringBuilder text = parseBracketedTextExactly();
-                value.append(fieldContentParser.format(text, field));
-
+                value.append(fieldContentFormatter.format(text, field));
             } else if (Character.isDigit((char) character)) { // value is a number
                 String number = parseTextToken();
                 value.append(number);
@@ -623,7 +617,6 @@ public class BibtexParser implements Parser {
             skipWhitespace();
         }
         return value.toString();
-
     }
 
     /**

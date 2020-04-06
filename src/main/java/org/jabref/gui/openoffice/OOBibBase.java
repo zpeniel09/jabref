@@ -1,10 +1,7 @@
 package org.jabref.gui.openoffice;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -48,7 +45,6 @@ import com.sun.star.beans.PropertyVetoException;
 import com.sun.star.beans.UnknownPropertyException;
 import com.sun.star.beans.XPropertyContainer;
 import com.sun.star.beans.XPropertySet;
-import com.sun.star.comp.helper.Bootstrap;
 import com.sun.star.comp.helper.BootstrapException;
 import com.sun.star.container.NoSuchElementException;
 import com.sun.star.container.XEnumeration;
@@ -131,7 +127,7 @@ class OOBibBase {
 
     private final DialogService dialogService;
 
-    public OOBibBase(String pathToOO, boolean atEnd, DialogService dialogService) throws IllegalAccessException, InvocationTargetException, BootstrapException, CreationException, IOException {
+    public OOBibBase(List<URL> jarUrls, boolean atEnd, DialogService dialogService) throws IllegalAccessException, InvocationTargetException, BootstrapException, CreationException, IOException, ClassNotFoundException {
 
         this.dialogService = dialogService;
 
@@ -147,8 +143,8 @@ class OOBibBase {
         yearAuthorTitleComparator = new FieldComparatorStack<>(yearAuthorTitleList);
 
         this.atEnd = atEnd;
-        xDesktop = simpleBootstrap(pathToOO);
 
+        xDesktop = simpleBootstrap(jarUrls);
     }
 
     public boolean isConnectedToDocument() {
@@ -235,30 +231,14 @@ class OOBibBase {
         return result;
     }
 
-    private XDesktop simpleBootstrap(String pathToExecutable)
-        throws IllegalAccessException, InvocationTargetException, BootstrapException,
-        CreationException, IOException {
+    private XDesktop simpleBootstrap(List<URL> jarUrls)
+        throws CreationException, BootstrapException {
 
-        ClassLoader loader = ClassLoader.getSystemClassLoader();
-        if (loader instanceof URLClassLoader) {
-            URLClassLoader cl = (URLClassLoader) loader;
-            Class<URLClassLoader> sysclass = URLClassLoader.class;
-            try {
-                Method method = sysclass.getDeclaredMethod("addURL", URL.class);
-                method.setAccessible(true);
-                method.invoke(cl, new File(pathToExecutable).toURI().toURL());
-            } catch (SecurityException | NoSuchMethodException | MalformedURLException t) {
-                LOGGER.error("Error, could not add URL to system classloader", t);
-                cl.close();
-                throw new IOException("Error, could not add URL to system classloader", t);
-            }
-        } else {
-            LOGGER.error("Error occured, URLClassLoader expected but " + loader.getClass()
-                         + " received. Could not continue.");
-        }
+        URL[] urls = jarUrls.toArray(new URL[1]);
+        URLClassLoader loader = new URLClassLoader(urls, null);
 
         //Get the office component context:
-        XComponentContext xContext = Bootstrap.bootstrap();
+        XComponentContext xContext = org.jabref.gui.openoffice.Bootstrap.bootstrap(loader);
         //Get the office service manager:
         XMultiComponentFactory xServiceManager = xContext.getServiceManager();
         //Create the desktop, which is the root frame of the
@@ -1293,6 +1273,7 @@ class OOBibBase {
         throws NoSuchElementException, WrappedTargetException {
         BibDatabase resultDatabase = new BibDatabase();
         List<String> cited = findCitedKeys();
+        List<BibEntry> entriesToInsert = new ArrayList<BibEntry>();
 
         // For each cited key
         for (String key : cited) {
@@ -1303,13 +1284,13 @@ class OOBibBase {
                 if (entry.isPresent()) {
                     BibEntry clonedEntry = (BibEntry) entry.get().clone();
                     // Insert a copy of the entry
-                    resultDatabase.insertEntry(clonedEntry);
+                    entriesToInsert.add(clonedEntry);
                     // Check if the cloned entry has a crossref field
                     clonedEntry.getField(StandardField.CROSSREF).ifPresent(crossref -> {
                         // If the crossref entry is not already in the database
                         if (!resultDatabase.getEntryByKey(crossref).isPresent()) {
                             // Add it if it is in the current library
-                            loopDatabase.getEntryByKey(crossref).ifPresent(resultDatabase::insertEntry);
+                            loopDatabase.getEntryByKey(crossref).ifPresent(entriesToInsert::add);
                         }
                     });
 
@@ -1318,7 +1299,7 @@ class OOBibBase {
                 }
             }
         }
-
+        resultDatabase.insertEntries(entriesToInsert);
         return resultDatabase;
     }
 

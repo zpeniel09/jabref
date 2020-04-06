@@ -9,13 +9,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jabref.logic.bibtex.FieldWriter;
+import org.jabref.logic.bibtex.FieldWriterPreferences;
+import org.jabref.logic.bibtex.InvalidFieldValueException;
 import org.jabref.model.database.BibDatabase;
 import org.jabref.model.entry.AuthorList;
 import org.jabref.model.entry.BibEntry;
+import org.jabref.model.entry.Month;
 import org.jabref.model.entry.field.Field;
 import org.jabref.model.entry.field.FieldFactory;
 import org.jabref.model.entry.field.StandardField;
@@ -31,15 +36,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * A Bibtex Virtual machine that can execute .bst files.
- *
+ * A BibTeX Virtual machine that can execute .bst files.
+ * <p>
  * Documentation can be found in the original bibtex distribution:
- *
+ * <p>
  * https://www.ctan.org/pkg/bibtex
- *
  */
-
 public class VM implements Warn {
 
     public static final Integer FALSE = 0;
@@ -74,7 +76,6 @@ public class VM implements Warn {
 
         public final String name;
 
-
         public Identifier(String name) {
             this.name = name;
         }
@@ -87,7 +88,6 @@ public class VM implements Warn {
     public static class Variable {
 
         public final String name;
-
 
         public Variable(String name) {
             this.name = name;
@@ -102,7 +102,6 @@ public class VM implements Warn {
     public interface BstFunction {
         void execute(BstEntry context);
     }
-
 
     public VM(File f) throws RecognitionException, IOException {
         this(new ANTLRFileStream(f.getPath()));
@@ -122,7 +121,7 @@ public class VM implements Warn {
 
         this.buildInFunctions = new HashMap<>(37);
 
-        /**
+        /*
          * Pops the top two (integer) literals, compares them, and pushes
          * the integer 1 if the second is greater than the first, 0
          * otherwise.
@@ -141,7 +140,7 @@ public class VM implements Warn {
             stack.push(((Integer) o1).compareTo((Integer) o2) > 0 ? VM.TRUE : VM.FALSE);
         });
 
-        /** Analogous. */
+        /* Analogous to >. */
         buildInFunctions.put("<", context -> {
             if (stack.size() < 2) {
                 throw new VMException("Not enough operands on stack for operation <");
@@ -156,7 +155,7 @@ public class VM implements Warn {
             stack.push(((Integer) o1).compareTo((Integer) o2) < 0 ? VM.TRUE : VM.FALSE);
         });
 
-        /**
+        /*
          * Pops the top two (both integer or both string) literals, compares
          * them, and pushes the integer 1 if they're equal, 0 otherwise.
          */
@@ -180,7 +179,7 @@ public class VM implements Warn {
             stack.push(o1.equals(o2) ? VM.TRUE : VM.FALSE);
         });
 
-        /** Pops the top two (integer) literals and pushes their sum. */
+        /* Pops the top two (integer) literals and pushes their sum. */
         buildInFunctions.put("+", context -> {
             if (stack.size() < 2) {
                 throw new VMException("Not enough operands on stack for operation +");
@@ -195,7 +194,7 @@ public class VM implements Warn {
             stack.push((Integer) o1 + (Integer) o2);
         });
 
-        /**
+        /*
          * Pops the top two (integer) literals and pushes their difference
          * (the first subtracted from the second).
          */
@@ -213,7 +212,7 @@ public class VM implements Warn {
             stack.push((Integer) o1 - (Integer) o2);
         });
 
-        /**
+        /*
          * Pops the top two (string) literals, concatenates them (in reverse
          * order, that is, the order in which pushed), and pushes the
          * resulting string.
@@ -225,14 +224,23 @@ public class VM implements Warn {
             Object o2 = stack.pop();
             Object o1 = stack.pop();
 
+            if (o1 == null) {
+                o1 = "";
+            }
+            if (o2 == null) {
+                o2 = "";
+            }
+
             if (!((o1 instanceof String) && (o2 instanceof String))) {
+                LOGGER.error("o1: {} ({})", o1, o1.getClass());
+                LOGGER.error("o2: {} ({})", o2, o2.getClass());
                 throw new VMException("Can only concatenate two String with *");
             }
 
             stack.push(o1.toString() + o2);
         });
 
-        /**
+        /*
          * Pops the top two literals and assigns to the first (which must be
          * a global or entry variable) the value of the second.
          */
@@ -245,14 +253,14 @@ public class VM implements Warn {
             assign(context, o1, o2);
         });
 
-        /**
+        /*
          * Pops the top (string) literal, adds a `.' to it if the last non
          * '}' character isn't a `.', `?', or `!', and pushes this resulting
          * string.
          */
         buildInFunctions.put("add.period$", context -> addPeriodFunction());
 
-        /**
+        /*
          * Executes the function whose name is the entry type of an entry.
          * For example if an entry is of type book, this function executes
          * the book function. When given as an argument to the ITERATE
@@ -266,12 +274,12 @@ public class VM implements Warn {
             if (context == null) {
                 throw new VMException("Call.type$ can only be called from within a context (ITERATE or REVERSE).");
             }
-            VM.this.execute(context.getBibtexEntry().getType().getName(), context);
+            VM.this.execute(context.entry.getType().getName(), context);
         });
 
         buildInFunctions.put("change.case$", new ChangeCaseFunction(this));
 
-        /**
+        /*
          * Pops the top (string) literal, makes sure it's a single
          * character, converts it to the corresponding ASCII integer, and
          * pushes this integer.
@@ -291,7 +299,7 @@ public class VM implements Warn {
             stack.push((int) s.charAt(0));
         });
 
-        /**
+        /*
          * Pushes the string that was the \cite-command argument for this
          * entry.
          */
@@ -299,10 +307,10 @@ public class VM implements Warn {
             if (context == null) {
                 throw new VMException("Must have an entry to cite$");
             }
-            stack.push(context.getBibtexEntry().getCiteKeyOptional().orElse(null));
+            stack.push(context.entry.getCiteKeyOptional().orElse(null));
         });
 
-        /**
+        /*
          * Pops the top literal from the stack and pushes two copies of it.
          */
         buildInFunctions.put("duplicate$", context -> {
@@ -315,7 +323,7 @@ public class VM implements Warn {
             stack.push(o1);
         });
 
-        /**
+        /*
          * Pops the top literal and pushes the integer 1 if it's a missing
          * field or a string having no non-white-space characters, 0
          * otherwise.
@@ -342,7 +350,7 @@ public class VM implements Warn {
 
         buildInFunctions.put("format.name$", new FormatNameFunction(this));
 
-        /**
+        /*
          * Pops the top three literals (they are two function literals and
          * an integer literal, in that order); if the integer is greater
          * than 0, it executes the second literal, else it executes the
@@ -368,7 +376,7 @@ public class VM implements Warn {
             }
         });
 
-        /**
+        /*
          * Pops the top (integer) literal, interpreted as the ASCII integer
          * value of a single character, converts it to the corresponding
          * single-character string, and pushes this string.
@@ -388,7 +396,7 @@ public class VM implements Warn {
             stack.push(String.valueOf((char) i.intValue()));
         });
 
-        /**
+        /*
          * Pops the top (integer) literal, converts it to its (unique)
          * string equivalent, and pushes this string.
          */
@@ -405,7 +413,7 @@ public class VM implements Warn {
             stack.push(o1.toString());
         });
 
-        /**
+        /*
          * Pops the top literal and pushes the integer 1 if it's a missing
          * field, 0 otherwise.
          */
@@ -429,7 +437,7 @@ public class VM implements Warn {
             stack.push(VM.FALSE);
         });
 
-        /**
+        /*
          * Writes onto the bbl file what is accumulated in the output buffer.
          * It writes a blank line if and only if the output buffer is empty.
          * Since write$ does reasonable line breaking, you should use this
@@ -438,7 +446,7 @@ public class VM implements Warn {
          */
         buildInFunctions.put("newline$", context -> VM.this.bbl.append('\n'));
 
-        /**
+        /*
          * Pops the top (string) literal and pushes the number of names the
          * string represents one plus the number of occurrences of the
          * substring "and" (ignoring case differences) surrounded by
@@ -458,13 +466,13 @@ public class VM implements Warn {
             stack.push(AuthorList.parse(s).getNumberOfAuthors());
         });
 
-        /**
+        /*
          * Pops the top of the stack but doesn't print it; this gets rid of
          * an unwanted stack literal.
          */
         buildInFunctions.put("pop$", context -> stack.pop());
 
-        /**
+        /*
          * The |built_in| function {\.{preamble\$}} pushes onto the stack
          * the concatenation of all the \.{preamble} strings read from the
          * database files. (or the empty string if there where none)
@@ -475,7 +483,7 @@ public class VM implements Warn {
             stack.push(preamble);
         });
 
-        /**
+        /*
          * Pops the top (string) literal, removes nonalphanumeric characters
          * except for white-space characters and hyphens and ties (these all get
          * converted to a space), removes certain alphabetic characters
@@ -484,30 +492,30 @@ public class VM implements Warn {
          */
         buildInFunctions.put("purify$", new PurifyFunction(this));
 
-        /**
+        /*
          * Pushes the string consisting of the double-quote character.
          */
         buildInFunctions.put("quote$", context -> stack.push("\""));
 
-        /**
+        /*
          * Is a no-op.
          */
         buildInFunctions.put("skip$", context -> {
-                // Nothing to do! Yeah!
+            // Nothing to do! Yeah!
         });
 
-        /**
+        /*
          * Pops and prints the whole stack; it's meant to be used for style
          * designers while debugging.
          */
         buildInFunctions.put("stack$", context -> {
             while (!stack.empty()) {
-                LOGGER.debug("Stack entry", stack.pop());
+                LOGGER.debug("Stack entry {}", stack.pop());
             }
         });
 
 
-        /**
+        /*
          * Pops the top three literals (they are the two integers literals
          * len and start, and a string literal, in that order). It pushes
          * the substring of the (at most) len consecutive characters
@@ -518,7 +526,7 @@ public class VM implements Warn {
          */
         buildInFunctions.put("substring$", context -> substringFunction());
 
-        /**
+        /*
          * Swaps the top two literals on the stack. text.length$ Pops the
          * top (string) literal, and pushes the number of text characters
          * it contains, where an accented character (more precisely, a
@@ -537,7 +545,7 @@ public class VM implements Warn {
             stack.push(f2);
         });
 
-        /**
+        /*
          * text.length$ Pops the top (string) literal, and pushes the number
          * of text characters it contains, where an accented character (more
          * precisely, a "special character", defined in Section 4) counts as
@@ -550,7 +558,7 @@ public class VM implements Warn {
          */
         buildInFunctions.put("text.length$", context -> textLengthFunction());
 
-        /**
+        /*
          * Pops the top two literals (the integer literal len and a string
          * literal, in that order). It pushes the substring of the (at most) len
          * consecutive text characters starting from the beginning of the
@@ -563,12 +571,12 @@ public class VM implements Warn {
          */
         buildInFunctions.put("text.prefix$", new TextPrefixFunction(this));
 
-        /**
+        /*
          * Pops and prints the top of the stack to the log file. It's useful for debugging.
          */
-        buildInFunctions.put("top$", context -> LOGGER.debug("Stack entry", stack.pop()));
+        buildInFunctions.put("top$", context -> LOGGER.debug("Stack entry {}", stack.pop()));
 
-        /**
+        /*
          * Pushes the current entry's type (book, article, etc.), but pushes
          * the null string if the type is either unknown or undefined.
          */
@@ -577,10 +585,10 @@ public class VM implements Warn {
                 throw new VMException("type$ need a context.");
             }
 
-            stack.push(context.getBibtexEntry().getType().getName());
+            stack.push(context.entry.getType().getName());
         });
 
-        /**
+        /*
          * Pops the top (string) literal and prints it following a warning
          * message. This also increments a count of the number of warning
          * messages issued.
@@ -595,7 +603,7 @@ public class VM implements Warn {
             }
         });
 
-        /**
+        /*
          * Pops the top two (function) literals, and keeps executing the
          * second as long as the (integer) literal left on the stack by
          * executing the first is greater than 0.
@@ -604,7 +612,7 @@ public class VM implements Warn {
 
         buildInFunctions.put("width$", new WidthFunction(this));
 
-        /**
+        /*
          * Pops the top (string) literal and writes it on the output buffer
          * (which will result in stuff being written onto the bbl file when
          * the buffer fills up).
@@ -613,7 +621,6 @@ public class VM implements Warn {
             String s = (String) stack.pop();
             VM.this.bbl.append(s);
         });
-
     }
 
     private void textLengthFunction() {
@@ -816,7 +823,6 @@ public class VM implements Warn {
                 return true;
             }
             return false;
-
         }
 
         if ((context != null) && context.localIntegers.containsKey(name)) {
@@ -837,6 +843,18 @@ public class VM implements Warn {
     }
 
     public String run(Collection<BibEntry> bibtex) {
+        return this.run(bibtex, null);
+    }
+
+    /**
+     * Transforms the given list of BibEntries to a rendered list of references using the underlying bst file
+     *
+     * @param bibEntries  list of entries to convert
+     * @param bibDatabase (may be null) the bibDatabase used for resolving strings / crossref
+     * @return list of references in plain text form
+     */
+    public String run(Collection<BibEntry> bibEntries, BibDatabase bibDatabase) {
+        Objects.requireNonNull(bibEntries);
 
         // Reset
         bbl = new StringBuilder();
@@ -853,8 +871,8 @@ public class VM implements Warn {
         stack = new Stack<>();
 
         // Create entries
-        entries = new ArrayList<>(bibtex.size());
-        for (BibEntry entry : bibtex) {
+        entries = new ArrayList<>(bibEntries.size());
+        for (BibEntry entry : bibEntries) {
             entries.add(new BstEntry(entry));
         }
 
@@ -862,39 +880,39 @@ public class VM implements Warn {
         for (int i = 0; i < tree.getChildCount(); i++) {
             Tree child = tree.getChild(i);
             switch (child.getType()) {
-            case BstParser.STRINGS:
-                strings(child);
-                break;
-            case BstParser.INTEGERS:
-                integers(child);
-                break;
-            case BstParser.FUNCTION:
-                function(child);
-                break;
-            case BstParser.EXECUTE:
-                execute(child);
-                break;
-            case BstParser.SORT:
-                sort();
-                break;
-            case BstParser.ITERATE:
-                iterate(child);
-                break;
-            case BstParser.REVERSE:
-                reverse(child);
-                break;
-            case BstParser.ENTRY:
-                entry(child);
-                break;
-            case BstParser.READ:
-                read();
-                break;
-            case BstParser.MACRO:
-                macro(child);
-                break;
-            default:
-                LOGGER.info("Unknown type: " + child.getType());
-                break;
+                case BstParser.STRINGS:
+                    strings(child);
+                    break;
+                case BstParser.INTEGERS:
+                    integers(child);
+                    break;
+                case BstParser.FUNCTION:
+                    function(child);
+                    break;
+                case BstParser.EXECUTE:
+                    execute(child);
+                    break;
+                case BstParser.SORT:
+                    sort();
+                    break;
+                case BstParser.ITERATE:
+                    iterate(child);
+                    break;
+                case BstParser.REVERSE:
+                    reverse(child);
+                    break;
+                case BstParser.ENTRY:
+                    entry(child);
+                    break;
+                case BstParser.READ:
+                    read(bibDatabase);
+                    break;
+                case BstParser.MACRO:
+                    macro(child);
+                    break;
+                default:
+                    LOGGER.info("Unknown type: {}", child.getType());
+                    break;
             }
         }
 
@@ -902,39 +920,58 @@ public class VM implements Warn {
     }
 
     /**
-     * Dredges up from the database file the field values for each entry in the
-     * list. It has no arguments. If a database entry doesn't have a value for a
-     * field (and probably no database entry will have a value for every field),
-     * that field variable is marked as missing for the entry.
-     *
+     * Dredges up from the database file the field values for each entry in the list. It has no arguments. If a database
+     * entry doesn't have a value for a field (and probably no database entry will have a value for every field), that
+     * field variable is marked as missing for the entry.
+     * <p>
      * We use null for the missing entry designator.
+     * @param bibDatabase
      */
-    private void read() {
+    private void read(BibDatabase bibDatabase) {
+        FieldWriter fieldWriter = new FieldWriter(new FieldWriterPreferences());
         for (BstEntry e : entries) {
-            for (Map.Entry<String, String> mEntry : e.getFields().entrySet()) {
+            for (Map.Entry<String, String> mEntry : e.fields.entrySet()) {
                 Field field = FieldFactory.parseField(mEntry.getKey());
-                String fieldValue = e.getBibtexEntry().getField(field).orElse(null);
-
+                String fieldValue = e.entry.getResolvedFieldOrAlias(field, bibDatabase)
+                                           .map(content -> {
+                                               try {
+                                                   String result = fieldWriter.write(field, content);
+                                                   if (result.startsWith("{")) {
+                                                       // Strip enclosing {} from the output
+                                                       return result.substring(1, result.length() - 1);
+                                                   }
+                                                   if (field == StandardField.MONTH) {
+                                                       // We don't have the internal BibTeX strings at hand.
+                                                       // We nevertheless want to have the full month name.
+                                                       // Thus, we lookup the full month name here.
+                                                       return Month.parse(result)
+                                                                   .map(month -> month.getFullName())
+                                                                   .orElse(result);
+                                                   }
+                                                   return result;
+                                               } catch (InvalidFieldValueException invalidFieldValueException) {
+                                                   // in case there is something wrong with the content, just return the content itself
+                                                   return content;
+                                               }
+                                           })
+                                           .orElse(null);
                 mEntry.setValue(fieldValue);
             }
         }
 
         for (BstEntry e : entries) {
-            if (!e.getFields().containsKey(StandardField.CROSSREF.getName())) {
-                e.getFields().put(StandardField.CROSSREF.getName(), null);
+            if (!e.fields.containsKey(StandardField.CROSSREF.getName())) {
+                e.fields.put(StandardField.CROSSREF.getName(), null);
             }
         }
     }
 
     /**
-     * Defines a string macro. It has two arguments; the first is the macro's
-     * name, which is treated like any other variable or function name, and the
-     * second is its definition, which must be double-quote-delimited. You must
-     * have one for each three-letter month abbreviation; in addition, you
-     * should have one for common journal names. The user's database may
-     * override any definition you define using this command. If you want to
-     * define a string the user can't touch, use the FUNCTION command, which has
-     * a compatible syntax.
+     * Defines a string macro. It has two arguments; the first is the macro's name, which is treated like any other
+     * variable or function name, and the second is its definition, which must be double-quote-delimited. You must have
+     * one for each three-letter month abbreviation; in addition, you should have one for common journal names. The
+     * user's database may override any definition you define using this command. If you want to define a string the
+     * user can't touch, use the FUNCTION command, which has a compatible syntax.
      */
     private void macro(Tree child) {
         String name = child.getChild(0).getText();
@@ -945,7 +982,6 @@ public class VM implements Warn {
     public class MacroFunction implements BstFunction {
 
         private final String replacement;
-
 
         public MacroFunction(String replacement) {
             this.replacement = replacement;
@@ -958,13 +994,11 @@ public class VM implements Warn {
     }
 
     /**
-     * Declares the fields and entry variables. It has three arguments, each a
-     * (possibly empty) list of variable names. The three lists are of: fields,
-     * integer entry variables, and string entry variables. There is an
-     * additional field that BibTEX automatically declares, crossref, used for
-     * cross referencing. And there is an additional string entry variable
-     * automatically declared, sort.key$, used by the SORT command. Each of
-     * these variables has a value for each entry on the list.
+     * Declares the fields and entry variables. It has three arguments, each a (possibly empty) list of variable names.
+     * The three lists are of: fields, integer entry variables, and string entry variables. There is an additional field
+     * that BibTEX automatically declares, crossref, used for cross referencing. And there is an additional string entry
+     * variable automatically declared, sort.key$, used by the SORT command. Each of these variables has a value for
+     * each entry on the list.
      */
     private void entry(Tree child) {
         // Fields first
@@ -974,7 +1008,7 @@ public class VM implements Warn {
             String name = t.getChild(i).getText();
 
             for (BstEntry entry : entries) {
-                entry.getFields().put(name, null);
+                entry.fields.put(name, null);
             }
         }
 
@@ -1044,7 +1078,6 @@ public class VM implements Warn {
 
         private final Tree localTree;
 
-
         public StackFunction(Tree stack) {
             localTree = stack;
         }
@@ -1062,22 +1095,22 @@ public class VM implements Warn {
                 try {
 
                     switch (c.getType()) {
-                    case BstParser.STRING:
-                        String s = c.getText();
-                        push(s.substring(1, s.length() - 1));
-                        break;
-                    case BstParser.INTEGER:
-                        push(Integer.parseInt(c.getText().substring(1)));
-                        break;
-                    case BstParser.QUOTED:
-                        push(new Identifier(c.getText().substring(1)));
-                        break;
-                    case BstParser.STACK:
-                        push(c);
-                        break;
-                    default:
-                        VM.this.execute(c.getText(), context);
-                        break;
+                        case BstParser.STRING:
+                            String s = c.getText();
+                            push(s.substring(1, s.length() - 1));
+                            break;
+                        case BstParser.INTEGER:
+                            push(Integer.parseInt(c.getText().substring(1)));
+                            break;
+                        case BstParser.QUOTED:
+                            push(new Identifier(c.getText().substring(1)));
+                            break;
+                        case BstParser.STACK:
+                            push(c);
+                            break;
+                        default:
+                            VM.this.execute(c.getText(), context);
+                            break;
                     }
                 } catch (VMException e) {
                     if (file == null) {
@@ -1089,7 +1122,6 @@ public class VM implements Warn {
                     throw e;
                 }
             }
-
         }
     }
 
@@ -1101,8 +1133,8 @@ public class VM implements Warn {
 
         if (context != null) {
 
-            if (context.getFields().containsKey(name)) {
-                stack.push(context.getFields().get(name));
+            if (context.fields.containsKey(name)) {
+                stack.push(context.fields.get(name));
                 return;
             }
             if (context.localStrings.containsKey(name)) {
@@ -1136,17 +1168,12 @@ public class VM implements Warn {
         String name = child.getChild(0).getText();
         Tree localStack = child.getChild(1);
         functions.put(name, new StackFunction(localStack));
-
     }
 
     /**
-     * Declares global integer variables. It has one argument, a list of
-     * variable names. There are two such automatically-declared variables,
-     * entry.max$ and global.max$, used for limiting the lengths of string vari-
-     * ables. You may have any number of these commands, but a variable's
-     * declaration must precede its use.
-     *
-     * @param child
+     * Declares global integer variables. It has one argument, a list of variable names. There are two such
+     * automatically-declared variables, entry.max$ and global.max$, used for limiting the lengths of string vari-
+     * ables. You may have any number of these commands, but a variable's declaration must precede its use.
      */
     private void integers(Tree child) {
         Tree t = child.getChild(0);
@@ -1158,9 +1185,8 @@ public class VM implements Warn {
     }
 
     /**
-     * Declares global string variables. It has one argument, a list of variable
-     * names. You may have any number of these commands, but a variable's
-     * declaration must precede its use.
+     * Declares global string variables. It has one argument, a list of variable names. You may have any number of these
+     * commands, but a variable's declaration must precede its use.
      *
      * @param child
      */
@@ -1175,25 +1201,17 @@ public class VM implements Warn {
 
     public static class BstEntry {
 
-        private final BibEntry entry;
+        public final BibEntry entry;
 
-        private final Map<String, String> localStrings = new HashMap<>();
+        public final Map<String, String> localStrings = new HashMap<>();
 
-        private final Map<String, String> fields = new HashMap<>();
+        // keys filled by org.jabref.logic.bst.VM.entry based on the contents of the bst file
+        public final Map<String, String> fields = new HashMap<>();
 
-        private final Map<String, Integer> localIntegers = new HashMap<>();
-
+        public final Map<String, Integer> localIntegers = new HashMap<>();
 
         public BstEntry(BibEntry e) {
             this.entry = e;
-        }
-
-        public Map<String, String> getFields() {
-            return fields;
-        }
-
-        public BibEntry getBibtexEntry() {
-            return entry;
         }
     }
 
@@ -1233,5 +1251,4 @@ public class VM implements Warn {
     public void warn(String string) {
         LOGGER.warn(string);
     }
-
 }

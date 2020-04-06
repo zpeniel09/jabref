@@ -4,10 +4,13 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.css.PseudoClass;
 import javafx.event.Event;
@@ -34,7 +37,9 @@ import javafx.util.Duration;
 
 import org.jabref.Globals;
 import org.jabref.gui.BasePanel;
+import org.jabref.gui.ClipBoardManager;
 import org.jabref.gui.JabRefFrame;
+import org.jabref.gui.StateManager;
 import org.jabref.gui.autocompleter.AppendPersonNamesStrategy;
 import org.jabref.gui.autocompleter.AutoCompleteFirstNameMode;
 import org.jabref.gui.autocompleter.AutoCompleteSuggestionProvider;
@@ -45,7 +50,9 @@ import org.jabref.gui.keyboard.KeyBinding;
 import org.jabref.gui.keyboard.KeyBindingRepository;
 import org.jabref.gui.maintable.MainTable;
 import org.jabref.gui.search.rules.describer.SearchDescribers;
+import org.jabref.gui.util.BindingsHelper;
 import org.jabref.gui.util.DefaultTaskExecutor;
+import org.jabref.gui.util.IconValidationDecorator;
 import org.jabref.gui.util.TooltipTextUtil;
 import org.jabref.logic.l10n.Localization;
 import org.jabref.logic.search.SearchQuery;
@@ -53,6 +60,10 @@ import org.jabref.model.entry.Author;
 import org.jabref.preferences.JabRefPreferences;
 import org.jabref.preferences.SearchPreferences;
 
+import de.saxsys.mvvmfx.utils.validation.FunctionBasedValidator;
+import de.saxsys.mvvmfx.utils.validation.ValidationMessage;
+import de.saxsys.mvvmfx.utils.validation.Validator;
+import de.saxsys.mvvmfx.utils.validation.visualization.ControlsFxVisualizer;
 import impl.org.controlsfx.skin.AutoCompletePopup;
 import org.controlsfx.control.textfield.AutoCompletionBinding;
 import org.fxmisc.easybind.EasyBind;
@@ -60,6 +71,8 @@ import org.reactfx.util.FxTimer;
 import org.reactfx.util.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.jabref.gui.actions.ActionHelper.needsDatabase;
 
 public class GlobalSearchBar extends HBox {
 
@@ -77,13 +90,19 @@ public class GlobalSearchBar extends HBox {
     private final Button searchModeButton = new Button();
     private final Label currentResults = new Label("");
     private final Tooltip tooltip = new Tooltip();
+    private final StateManager stateManager;
     private SearchDisplayMode searchDisplayMode;
+    private Validator regexValidator;
 
-    public GlobalSearchBar(JabRefFrame frame) {
+    public GlobalSearchBar(JabRefFrame frame, StateManager stateManager) {
         super();
         this.frame = Objects.requireNonNull(frame);
+        this.stateManager = stateManager;
+
         SearchPreferences searchPreferences = new SearchPreferences(Globals.prefs);
         searchDisplayMode = searchPreferences.getSearchMode();
+        
+        this.searchField.disableProperty().bind(needsDatabase(stateManager).not());
 
         // fits the standard "found x entries"-message thus hinders the searchbar to jump around while searching if the frame width is too small
         currentResults.setPrefWidth(150);
@@ -99,12 +118,14 @@ public class GlobalSearchBar extends HBox {
             if (keyBinding.isPresent()) {
                 if (keyBinding.get().equals(KeyBinding.CLOSE)) {
                     // Clear search and select first entry, if available
-                    clearSearch();
+                    searchField.setText("");
                     frame.getCurrentBasePanel().getMainTable().getSelectionModel().selectFirst();
                     event.consume();
                 }
             }
         });
+
+        ClipBoardManager.addX11Support(searchField);
 
         regularExp = IconTheme.JabRefIcons.REG_EX.asToggleButton();
         regularExp.setSelected(searchPreferences.isRegularExpression());
@@ -132,10 +153,16 @@ public class GlobalSearchBar extends HBox {
         searchField.setMaxWidth(initialSize);
         HBox.setHgrow(searchField, Priority.ALWAYS);
 
-        Timer searchTask = FxTimer.create(java.time.Duration.ofMillis(SEARCH_DELAY), () -> {
-            LOGGER.debug("Run search " + searchField.getText());
-            performSearch();
-        });
+        regexValidator = new FunctionBasedValidator<>(
+                searchField.textProperty(),
+                query -> !(regularExp.isSelected() && !validRegex()),
+                ValidationMessage.error(Localization.lang("Invalid regular expression"))
+        );
+        ControlsFxVisualizer visualizer = new ControlsFxVisualizer();
+        visualizer.setDecoration(new IconValidationDecorator(Pos.CENTER_LEFT));
+        Platform.runLater(() -> { visualizer.initVisualization(regexValidator.getValidationStatus(), searchField); });
+
+        Timer searchTask = FxTimer.create(java.time.Duration.ofMillis(SEARCH_DELAY), this::performSearch);
         searchField.textProperty().addListener((observable, oldValue, newValue) -> searchTask.restart());
 
         EasyBind.subscribe(searchField.focusedProperty(), isFocused -> {
@@ -156,9 +183,19 @@ public class GlobalSearchBar extends HBox {
 
         this.setAlignment(Pos.CENTER_LEFT);
 
-        EasyBind.subscribe(Globals.stateManager.activeSearchQueryProperty(), searchQuery -> {
+        BindingsHelper.bindBidirectional(
+                stateManager.activeSearchQueryProperty(),
+                searchField.textProperty(),
+                searchTerm -> {
+                    performSearch();
+                },
+                query -> setSearchTerm(query.map(SearchQuery::getQuery).orElse(""))
+        );
+
+        EasyBind.subscribe(this.stateManager.activeSearchQueryProperty(), searchQuery -> {
+
             searchQuery.ifPresent(query -> {
-                updateResults(Globals.stateManager.getSearchResultSize().intValue(), SearchDescribers.getSearchDescriberFor(query).getDescription(),
+                updateResults(this.stateManager.getSearchResultSize().intValue(), SearchDescribers.getSearchDescriberFor(query).getDescription(),
                               query.isGrammarBasedSearch());
             });
         });
@@ -180,7 +217,7 @@ public class GlobalSearchBar extends HBox {
     public void endSearch() {
         BasePanel currentBasePanel = frame.getCurrentBasePanel();
         if (currentBasePanel != null) {
-            clearSearch();
+            searchField.setText("");
             MainTable mainTable = frame.getCurrentBasePanel().getMainTable();
             mainTable.requestFocus();
         }
@@ -196,38 +233,45 @@ public class GlobalSearchBar extends HBox {
         searchField.selectAll();
     }
 
-    private void clearSearch() {
-        currentResults.setText("");
-        searchField.setText("");
-        setHintTooltip(null);
-        Globals.stateManager.clearSearchQuery();
-    }
-
     public void performSearch() {
-        BasePanel currentBasePanel = frame.getCurrentBasePanel();
-        if (currentBasePanel == null) {
-            return;
-        }
+        LOGGER.debug("Run search " + searchField.getText());
+
         // An empty search field should cause the search to be cleared.
         if (searchField.getText().isEmpty()) {
-            clearSearch();
+            currentResults.setText("");
+            setHintTooltip(null);
+            stateManager.clearSearchQuery();
             return;
         }
 
-        SearchQuery searchQuery = getSearchQuery();
+        // Invalid regular expression
+        if (!regexValidator.getValidationStatus().isValid()) {
+            currentResults.setText(Localization.lang("Invalid regular expression"));
+            return;
+        }
+
+        SearchQuery searchQuery = new SearchQuery(this.searchField.getText(), this.caseSensitive.isSelected(), this.regularExp.isSelected());
         if (!searchQuery.isValid()) {
             informUserAboutInvalidSearchQuery();
             return;
         }
+        stateManager.setSearchQuery(searchQuery);
+    }
 
-        Globals.stateManager.setSearchQuery(searchQuery);
-
+    private boolean validRegex() {
+        try {
+            Pattern.compile(searchField.getText());
+        } catch (PatternSyntaxException e) {
+            LOGGER.debug(e.getMessage());
+            return false;
+        }
+        return true;
     }
 
     private void informUserAboutInvalidSearchQuery() {
         searchField.pseudoClassStateChanged(CLASS_NO_RESULTS, true);
 
-        Globals.stateManager.clearSearchQuery();
+        stateManager.clearSearchQuery();
 
         String illegalSearch = Localization.lang("Search failed: illegal search expression");
         currentResults.setText(illegalSearch);
@@ -260,13 +304,7 @@ public class GlobalSearchBar extends HBox {
         }
     }
 
-    private SearchQuery getSearchQuery() {
-        SearchQuery searchQuery = new SearchQuery(this.searchField.getText(), this.caseSensitive.isSelected(), this.regularExp.isSelected());
-        this.frame.getCurrentBasePanel().setCurrentSearchQuery(searchQuery);
-        return searchQuery;
-    }
-
-    public void updateResults(int matched, TextFlow description, boolean grammarBasedSearch) {
+    private void updateResults(int matched, TextFlow description, boolean grammarBasedSearch) {
         if (matched == 0) {
             currentResults.setText(Localization.lang("No results found."));
             searchField.pseudoClassStateChanged(CLASS_NO_RESULTS, true);

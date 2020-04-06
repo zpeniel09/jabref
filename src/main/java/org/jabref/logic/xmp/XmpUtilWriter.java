@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -194,12 +192,12 @@ public class XmpUtilWriter {
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             XmpSerializer serializer = new XmpSerializer();
             serializer.serialize(meta, os, true);
-            return os.toString(StandardCharsets.UTF_8.name());
+            return os.toString(StandardCharsets.UTF_8);
         } catch (TransformerException e) {
-            LOGGER.warn("Tranformation into xmp not possible: " + e.getMessage(), e);
+            LOGGER.warn("Transformation into XMP not possible: " + e.getMessage(), e);
             return "";
         } catch (UnsupportedEncodingException e) {
-            LOGGER.warn("Unsupported encoding to UTF-8 of bib entries in xmp metadata.", e);
+            LOGGER.warn("Unsupported encoding to UTF-8 of bib entries in XMP metadata.", e);
             return "";
         } catch (IOException e) {
             LOGGER.warn("IO Exception thrown by closing the output stream.", e);
@@ -249,40 +247,38 @@ public class XmpUtilWriter {
 
         // Query privacy filter settings
         boolean useXmpPrivacyFilter = xmpPreferences.isUseXMPPrivacyFilter();
-        // Fields for which not to write XMP data later on:
-        Set<Field> filters = new TreeSet<>(xmpPreferences.getXmpPrivacyFilter());
 
         // Set all the values including key and entryType
-        for (Entry<Field, String> field : resolvedEntry.getFieldMap().entrySet()) {
-            Field fieldName = field.getKey();
-            String fieldContent = field.getValue();
+        for (Entry<Field, String> fieldValuePair : resolvedEntry.getFieldMap().entrySet()) {
+            Field field = fieldValuePair.getKey();
+            String fieldContent = fieldValuePair.getValue();
 
-            if (useXmpPrivacyFilter && filters.contains(fieldName)) {
+            if (useXmpPrivacyFilter && xmpPreferences.getXmpPrivacyFilter().contains(field)) {
                 // erase field instead of adding it
-                if (StandardField.AUTHOR.equals(fieldName)) {
+                if (StandardField.AUTHOR.equals(field)) {
                     di.setAuthor(null);
-                } else if (StandardField.TITLE.equals(fieldName)) {
+                } else if (StandardField.TITLE.equals(field)) {
                     di.setTitle(null);
-                } else if (StandardField.KEYWORDS.equals(fieldName)) {
+                } else if (StandardField.KEYWORDS.equals(field)) {
                     di.setKeywords(null);
-                } else if (StandardField.ABSTRACT.equals(fieldName)) {
+                } else if (StandardField.ABSTRACT.equals(field)) {
                     di.setSubject(null);
                 } else {
-                    di.setCustomMetadataValue("bibtex/" + fieldName, null);
+                    di.setCustomMetadataValue("bibtex/" + field, null);
                 }
                 continue;
             }
 
-            if (StandardField.AUTHOR.equals(fieldName)) {
+            if (StandardField.AUTHOR.equals(field)) {
                 di.setAuthor(fieldContent);
-            } else if (StandardField.TITLE.equals(fieldName)) {
+            } else if (StandardField.TITLE.equals(field)) {
                 di.setTitle(fieldContent);
-            } else if (StandardField.KEYWORDS.equals(fieldName)) {
+            } else if (StandardField.KEYWORDS.equals(field)) {
                 di.setKeywords(fieldContent);
-            } else if (StandardField.ABSTRACT.equals(fieldName)) {
+            } else if (StandardField.ABSTRACT.equals(field)) {
                 di.setSubject(fieldContent);
             } else {
-                di.setCustomMetadataValue("bibtex/" + fieldName, fieldContent);
+                di.setCustomMetadataValue("bibtex/" + field, fieldContent);
             }
         }
         di.setCustomMetadataValue("bibtex/entrytype", resolvedEntry.getType().getDisplayName());

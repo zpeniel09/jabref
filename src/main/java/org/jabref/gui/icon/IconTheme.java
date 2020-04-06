@@ -17,9 +17,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
-
-import org.jabref.logic.groups.DefaultGroupsFactory;
-import org.jabref.preferences.JabRefPreferences;
+import javafx.scene.text.Font;
 
 import de.jensd.fx.glyphs.GlyphIcons;
 import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIcon;
@@ -28,26 +26,21 @@ import org.slf4j.LoggerFactory;
 
 public class IconTheme {
 
-    /**
-     * JabRef's default color
-     */
-    public static final Color DEFAULT_COLOR = JabRefPreferences.getInstance().getColor(JabRefPreferences.ICON_ENABLED_COLOR);
-    public static final Color DEFAULT_DISABLED_COLOR = JabRefPreferences.getInstance().getColor(JabRefPreferences.ICON_DISABLED_COLOR);
-    public static final javafx.scene.paint.Color SELECTED_COLOR = javafx.scene.paint.Color.web("#50618F");
+    public static final Color DEFAULT_DISABLED_COLOR = Color.web("#c8c8c8");
+    public static final Color SELECTED_COLOR = Color.web("#50618F");
     private static final String DEFAULT_ICON_PATH = "/images/external/red.png";
     private static final Logger LOGGER = LoggerFactory.getLogger(IconTheme.class);
-    private static final Map<String, String> KEY_TO_ICON = readIconThemeFile(
-                                                                             IconTheme.class.getResource("/images/Icons.properties"), "/images/external/");
+    private static final Map<String, String> KEY_TO_ICON = readIconThemeFile(IconTheme.class.getResource("/images/Icons.properties"), "/images/external/");
 
     public static void loadFonts() {
         try (InputStream stream = getMaterialDesignIconsStream()) {
-            javafx.scene.text.Font.loadFont(stream, 7);
+            Font.loadFont(stream, 7);
         } catch (IOException e) {
             LOGGER.error("Error loading Material Design Icons TTF font", e);
         }
 
         try (InputStream stream = getJabRefMaterialDesignIconsStream()) {
-            javafx.scene.text.Font.loadFont(stream, 7);
+            Font.loadFont(stream, 7);
         } catch (IOException e) {
             LOGGER.error("Error loading custom font for custom JabRef icons", e);
         }
@@ -61,8 +54,8 @@ public class IconTheme {
         return IconTheme.class.getResource("/fonts/JabRefMaterialDesign.ttf").openStream();
     }
 
-    public static Color getDefaultColor() {
-        return DEFAULT_COLOR;
+    public static Color getDefaultGroupColor() {
+        return Color.web("#8a8a8a");
     }
 
     public static Image getJabRefImageFX() {
@@ -91,7 +84,7 @@ public class IconTheme {
         String key = Objects.requireNonNull(name, "icon name");
         if (!KEY_TO_ICON.containsKey(key)) {
             LOGGER.warn("Could not find icon url by name " + name + ", so falling back on default icon "
-                        + DEFAULT_ICON_PATH);
+                    + DEFAULT_ICON_PATH);
         }
         String path = KEY_TO_ICON.getOrDefault(key, DEFAULT_ICON_PATH);
         return Objects.requireNonNull(IconTheme.class.getResource(path), "Path must not be null for key " + key);
@@ -115,7 +108,7 @@ public class IconTheme {
         Map<String, String> result = new HashMap<>();
 
         try (BufferedReader in = new BufferedReader(
-                                                    new InputStreamReader(url.openStream(), StandardCharsets.ISO_8859_1))) {
+                new InputStreamReader(url.openStream(), StandardCharsets.ISO_8859_1))) {
             String line;
             while ((line = in.readLine()) != null) {
                 if (!line.contains("=")) {
@@ -209,6 +202,7 @@ public class IconTheme {
         EXPORT_TO_CLIPBOARD(MaterialDesignIcon.CLIPBOARD_ARROW_LEFT) /*css: clipboard-arrow-left */,
         ATTACH_FILE(MaterialDesignIcon.PAPERCLIP) /*css: paperclip*/,
         AUTO_FILE_LINK(MaterialDesignIcon.FILE_FIND) /*css: file-find */,
+        AUTO_LINKED_FILE(MaterialDesignIcon.BRIEFCASE_CHECK) /*css: briefcase-check */,
         QUALITY_ASSURED(MaterialDesignIcon.CERTIFICATE), /*css: certificate */
         QUALITY(MaterialDesignIcon.CERTIFICATE), /*css: certificate */
         OPEN(MaterialDesignIcon.FOLDER_OUTLINE) /*css: folder */,
@@ -234,6 +228,7 @@ public class IconTheme {
         GITHUB(MaterialDesignIcon.GITHUB_CIRCLE), /*css: github-circle*/
         TOGGLE_ENTRY_PREVIEW(MaterialDesignIcon.LIBRARY_BOOKS), /*css: library-books */
         TOGGLE_GROUPS(MaterialDesignIcon.VIEW_LIST), /*css: view-list */
+        SHOW_PREFERENCES_LIST(MaterialDesignIcon.VIEW_LIST), /*css: view-list */
         WRITE_XMP(MaterialDesignIcon.IMPORT), /* css: import */
         FILE_WORD(MaterialDesignIcon.FILE_WORD), /*css: file-word */
         FILE_EXCEL(MaterialDesignIcon.FILE_EXCEL), /*css: file-excel */
@@ -251,6 +246,7 @@ public class IconTheme {
         FIND_DUPLICATES(MaterialDesignIcon.CODE_EQUAL), /*css: code-equal */
         CONNECT_DB(MaterialDesignIcon.CLOUD_UPLOAD), /*cloud-upload*/
         SUCCESS(MaterialDesignIcon.CHECK_CIRCLE),
+        CHECK(MaterialDesignIcon.CHECK) /*css: check */,
         WARNING(MaterialDesignIcon.ALERT),
         ERROR(MaterialDesignIcon.ALERT_CIRCLE),
         CASE_SENSITIVE(MaterialDesignIcon.ALPHABETICAL), /* css: mdi-alphabetical */
@@ -263,13 +259,17 @@ public class IconTheme {
         DATE_PICKER(MaterialDesignIcon.CALENDAR), /* css: calendar */
         DEFAULT_GROUP_ICON_COLORED(MaterialDesignIcon.PLAY),
         DEFAULT_GROUP_ICON(MaterialDesignIcon.LABEL_OUTLINE),
-        ALL_ENTRIES_GROUP_ICON(DefaultGroupsFactory.ALL_ENTRIES_GROUP_DEFAULT_ICON),
+        ALL_ENTRIES_GROUP_ICON(MaterialDesignIcon.DATABASE),
         IMPORT(MaterialDesignIcon.CALL_RECEIVED),
         EXPORT(MaterialDesignIcon.CALL_MADE),
         PREVIOUS_LEFT(MaterialDesignIcon.CHEVRON_LEFT),
         PREVIOUS_UP(MaterialDesignIcon.CHEVRON_UP),
         NEXT_RIGHT(MaterialDesignIcon.CHEVRON_RIGHT),
         NEXT_DOWN(MaterialDesignIcon.CHEVRON_DOWN),
+        LIST_MOVE_LEFT(MaterialDesignIcon.CHEVRON_LEFT),
+        LIST_MOVE_UP(MaterialDesignIcon.CHEVRON_UP),
+        LIST_MOVE_RIGHT(MaterialDesignIcon.CHEVRON_RIGHT),
+        LIST_MOVE_DOWN(MaterialDesignIcon.CHEVRON_DOWN),
         FIT_WIDTH(MaterialDesignIcon.ARROW_EXPAND_ALL),
         FIT_SINGLE_PAGE(MaterialDesignIcon.NOTE),
         ZOOM_OUT(MaterialDesignIcon.MAGNIFY_MINUS),
@@ -292,7 +292,15 @@ public class IconTheme {
         LATEX_FILE(MaterialDesignIcon.FILE_OUTLINE),
         LATEX_COMMENT(MaterialDesignIcon.COMMENT_TEXT_OUTLINE),
         LATEX_LINE(MaterialDesignIcon.FORMAT_LINE_SPACING),
-        PASSWORD_REVEALED(MaterialDesignIcon.EYE);
+        PASSWORD_REVEALED(MaterialDesignIcon.EYE),
+        ADD_ABBREVIATION_LIST(MaterialDesignIcon.FOLDER_PLUS),
+        OPEN_ABBREVIATION_LIST(MaterialDesignIcon.FOLDER_OUTLINE),
+        REMOVE_ABBREVIATION_LIST(MaterialDesignIcon.FOLDER_REMOVE),
+        ADD_ABBREVIATION(MaterialDesignIcon.PLAYLIST_PLUS),
+        REMOVE_ABBREVIATION(MaterialDesignIcon.PLAYLIST_MINUS),
+        NEW_ENTRY_FROM_PLAIN_TEXT(MaterialDesignIcon.PLUS_BOX),
+        REMOTE_DATABASE(MaterialDesignIcon.DATABASE),
+        HOME(MaterialDesignIcon.HOME);
 
         private final JabRefIcon icon;
 
@@ -336,7 +344,6 @@ public class IconTheme {
         @Override
         public JabRefIcon withColor(Color color) {
             return icon.withColor(color);
-
         }
 
         @Override
@@ -344,5 +351,4 @@ public class IconTheme {
             return icon.disabled();
         }
     }
-
 }

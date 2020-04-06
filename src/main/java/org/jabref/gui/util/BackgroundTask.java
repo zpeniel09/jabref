@@ -2,6 +2,7 @@ package org.jabref.gui.util;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -149,6 +150,10 @@ public abstract class BackgroundTask<V> {
         return taskExecutor.execute(this);
     }
 
+    public Future<?> scheduleWith(TaskExecutor taskExecutor, long delay, TimeUnit unit) {
+        return taskExecutor.schedule(this, delay, unit);
+    }
+
     /**
      * Sets the {@link Runnable} that is invoked after the task is finished, irrespectively if it was successful or
      * failed with an error.
@@ -228,7 +233,7 @@ public abstract class BackgroundTask<V> {
         return this;
     }
 
-    class BackgroundProgress {
+    static class BackgroundProgress {
 
         private final double workDone;
         private final double max;

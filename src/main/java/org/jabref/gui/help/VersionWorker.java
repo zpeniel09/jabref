@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import org.jabref.gui.DialogService;
 import org.jabref.gui.util.BackgroundTask;
@@ -35,6 +36,7 @@ public class VersionWorker {
      * The version which was previously ignored by the user
      */
     private final Version toBeIgnored;
+
     private final DialogService dialogService;
     private final TaskExecutor taskExecutor;
 
@@ -54,14 +56,18 @@ public class VersionWorker {
         return installedVersion.shouldBeUpdatedTo(availableVersions);
     }
 
-    /**
-     * @param manualExecution if this versions check is executed automatically (eg. on startup) or manually by the user
-     */
-    public void checkForNewVersionAsync(boolean manualExecution) {
+    public void checkForNewVersionAsync() {
         BackgroundTask.wrap(this::getNewVersion)
-                      .onSuccess(version -> showUpdateInfo(version, manualExecution))
-                      .onFailure(exception -> showConnectionError(exception, manualExecution))
+                      .onSuccess(version -> showUpdateInfo(version, true))
+                      .onFailure(exception -> showConnectionError(exception, true))
                       .executeWith(taskExecutor);
+    }
+
+    public void checkForNewVersionDelayed() {
+        BackgroundTask.wrap(this::getNewVersion)
+                      .onSuccess(version -> showUpdateInfo(version, false))
+                      .onFailure(exception -> showConnectionError(exception, false))
+                      .scheduleWith(taskExecutor, 30, TimeUnit.SECONDS);
     }
 
     /**
