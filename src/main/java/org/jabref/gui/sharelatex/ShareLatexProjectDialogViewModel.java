@@ -69,31 +69,28 @@ public class ShareLatexProjectDialogViewModel extends AbstractViewModel {
 
             ShareLatexParser parser = new ShareLatexParser();
             if (event.getPosition() != -1) {
-                //Was the change on the sharelatex server side  actually an entry?
+                // Was the change on the sharelatex server side  actually an entry?
                 Optional<BibEntry> entryFromPosition = parser.getEntryFromPosition(result, event.getPosition());
 
                 if (entryFromPosition.isPresent()) {
-
                     BibEntry identifedEntry = entryFromPosition.get();
                     Optional<BibEntry> entryFromSharelatex = entries.stream().filter(searchEntry -> searchEntry.equals(identifedEntry)).findFirst();
 
-                    //we search the local datase for an etry with the cite key
-                    Optional<BibEntry> entryFromLocalDatabase = stateManager.getActiveDatabase().get().getDatabase().getEntryByKey(identifedEntry.getCiteKey());
+                    // We search the local database for an entry with the cite key
+                    Optional<BibEntry> entryFromLocalDatabase = stateManager.getActiveDatabase().get().getDatabase().getEntryByKey(identifedEntry.getCiteKeyOptional().get());
 
                     if (entryFromSharelatex.isPresent() && entryFromLocalDatabase.isPresent()) {
 
-                        /*MergeSharedEntryDialog dlg = new MergeSharedEntryDialog(JabRefGUI.getMainFrame(),
+                        /* MergeSharedEntryDialog dlg = new MergeSharedEntryDialog(JabRefGUI.getMainFrame(),
                                 entryFromLocalDatabase.get(),
                                 entryFromSharelatex.get(),
                                 stateManager.getActiveDatabase().get().getMode());
                         dlg.setMetaData(stateManager.getActiveDatabase().get().getMetaData());
                         dlg.showMergeDialog();
                         */
-                        //TODO: After merge we probably need to send the new content to the server
+                        // TODO: After merge we probably need to send the new content to the server
                     }
-
                 } else {
-
                     try (BufferedWriter writer = Files.newBufferedWriter(actualDbPath, StandardCharsets.UTF_8)) {
                         writer.write(event.getNewDatabaseContent());
                         writer.close();

@@ -17,7 +17,7 @@ import javax.websocket.EndpointConfig;
 import javax.websocket.MessageHandler.Whole;
 import javax.websocket.Session;
 
-import org.jabref.JabRefExecutorService;
+import org.jabref.gui.JabRefExecutorService;
 import org.jabref.logic.importer.ImportFormatPreferences;
 import org.jabref.logic.importer.ParseException;
 import org.jabref.logic.sharelatex.events.ShareLatexContinueMessageEvent;

@@ -751,7 +751,7 @@ public class JabRefFrame extends BorderPane {
                 factory.createSubMenu(StandardActions.REMOTE_DB,
                         factory.createMenuItem(StandardActions.CONNECT_TO_SHARED_DB, new ConnectToSharedDatabaseCommand(this)),
                         factory.createMenuItem(StandardActions.PULL_CHANGES_FROM_SHARED_DB, new PullChangesFromSharedAction(stateManager)),
-                        factory.createMenuItem(StandardActions.SYNCHRONIZE_WITH_SHARELATEX, new SynchronizeWithShareLatexAction())
+                        factory.createMenuItem(StandardActions.SYNCHRONIZE_WITH_SHARELATEX, new SynchronizeWithShareLatexAction(dialogService))
                 ),
 
                 new SeparatorMenuItem(),
@@ -1420,9 +1420,4 @@ public class JabRefFrame extends BorderPane {
         }
     }
 
-    //TODO: FIXME
-    public Object getSynchronizeWithSharelatexAction() {
-        // TODO Auto-generated method stub
-        return null;
-    }
 }

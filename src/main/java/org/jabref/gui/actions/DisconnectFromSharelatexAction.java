@@ -5,7 +5,7 @@ import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 
-import org.jabref.Globals;
+import org.jabref.gui.Globals;
 
 public class DisconnectFromSharelatexAction extends AbstractAction {
 

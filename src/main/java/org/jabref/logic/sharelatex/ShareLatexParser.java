@@ -19,7 +19,6 @@ import org.jabref.model.sharelatex.SharelatexOtAppliedMessage;
 import org.jabref.model.util.FileUpdateMonitor;
 
 import com.github.difflib.DiffUtils;
-import com.github.difflib.algorithm.DiffException;
 import com.github.difflib.patch.AbstractDelta;
 import com.github.difflib.patch.Patch;
 import com.google.gson.Gson;
@@ -84,12 +83,12 @@ public class ShareLatexParser {
         JsonArray arr = obj.get("rootFolder").getAsJsonArray();
 
         Optional<JsonArray> docs = arr.get(0)
-                .getAsJsonObject()
-                .entrySet()
-                .stream()
-                .filter(entry -> entry.getKey().equals("docs"))
-                .map(v -> v.getValue().getAsJsonArray())
-                .findFirst();
+                                      .getAsJsonObject()
+                                      .entrySet()
+                                      .stream()
+                                      .filter(entry -> entry.getKey().equals("docs"))
+                                      .map(v -> v.getValue().getAsJsonArray())
+                                      .findFirst();
 
         if (docs.isPresent()) {
 
@@ -106,23 +105,16 @@ public class ShareLatexParser {
         return "";
     }
 
-
-
     public List<SharelatexDoc> generateDiffs(String before, String after) {
         Patch<String> patches;
-        try {
-            // Splits the lines using "\n" - therefore, we can use "\n" later on to join the text again
-            patches = DiffUtils.diff(before, after, null);
-        } catch (DiffException e) {
-            LOGGER.error("Could not calculate diff", e);
-            return Collections.emptyList();
-        }
+        // Splits the lines using "\n" - therefore, we can use "\n" later on to join the text again
+        patches = DiffUtils.diff(before, after, null);
 
         int pos = 0;
 
         List<SharelatexDoc> docsWithChanges = new ArrayList<>();
 
-        for (AbstractDelta<String> delta: patches.getDeltas()) {
+        for (AbstractDelta<String> delta : patches.getDeltas()) {
             SharelatexDoc doc = new SharelatexDoc();
             String newText;
             String deletedText;
@@ -179,7 +171,7 @@ public class ShareLatexParser {
                 String id = elem.getAsJsonObject().get("id").getAsString();
                 String name = elem.getAsJsonObject().get("name").getAsString();
                 String lastUpdated = elem.getAsJsonObject().get("lastUpdated").getAsString();
-                //String owner = elem.getAsJsonObject().get("owner_ref").getAsString();
+                // String owner = elem.getAsJsonObject().get("owner_ref").getAsString();
 
                 JsonObject owner = elem.getAsJsonObject().get("owner").getAsJsonObject();
                 String firstName = owner.get("first_name").getAsString();

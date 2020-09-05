@@ -5,8 +5,8 @@ import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
 
-import org.jabref.Globals;
-import org.jabref.JabRefExecutorService;
+import org.jabref.gui.Globals;
+import org.jabref.gui.JabRefExecutorService;
 import org.jabref.logic.exporter.SavePreferences;
 import org.jabref.logic.importer.ImportFormatPreferences;
 import org.jabref.model.database.BibDatabaseContext;
@@ -51,9 +51,15 @@ public class ShareLatexManager {
         });
     }
 
-    public void sendNewDatabaseContent(BibDatabaseContext database) {
+    /**
+     * pushes the database content to overleaf
+     *
+     * @param bibDatabaseContext the context of the database to send
+     */
+    public void sendNewDatabaseContent(BibDatabaseContext bibDatabaseContext) {
         try {
-            SavePreferences savePreferences = Globals.prefs.loadForSaveFromPreferences();
+            SavePreferences prefs = Globals.prefs.getSavePreferences();
+            // TODO FIXME important
             /*
             AtomicFileWriter fileWriter = new AtomicFileWriter(Paths.get(""), savePreferences.getEncoding());
 
@@ -67,7 +73,7 @@ public class ShareLatexManager {
             */
             connector.sendNewDatabaseContent("");
         } catch (InterruptedException e) {
-            LOGGER.error("Could not prepare databse for saving ", e);
+            LOGGER.error("Could not prepare database for saving ", e);
         }
     }
 

@@ -8,10 +8,11 @@ import javafx.scene.control.Button;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
-import org.jabref.Globals;
 import org.jabref.gui.DialogService;
 import org.jabref.gui.FXDialog;
+import org.jabref.gui.Globals;
 import org.jabref.gui.util.BaseDialog;
+import org.jabref.logic.l10n.Localization;
 import org.jabref.logic.sharelatex.ShareLatexManager;
 import org.jabref.logic.sharelatex.SharelatexConnectionProperties;
 
@@ -27,6 +28,10 @@ public class ShareLatexLoginDialogView extends BaseDialog<Void> {
     private SharelatexConnectionProperties props;
     private ShareLatexLoginDialogViewModel viewModel;
 
+    public ShareLatexLoginDialogView() {
+
+    }
+
     @FXML
     private void initialize() {
         viewModel = new ShareLatexLoginDialogViewModel();
@@ -38,7 +43,7 @@ public class ShareLatexLoginDialogView extends BaseDialog<Void> {
 
     @FXML
     private void signIn() {
-        btnLogin.setText("Logging in....");
+        btnLogin.setText(Localization.lang("Logging in..."));
         try {
             String result = manager.login(tbAddress.getText(), tbUsername.getText(), tbPassword.getText());
             if (result.contains("incorrect")) {
@@ -46,7 +51,7 @@ public class ShareLatexLoginDialogView extends BaseDialog<Void> {
                 dlg.setContentText("Your email or password is incorrect. Please try again");
                 dlg.showAndWait();
             } else {
-                //TODO: Wait until pdf + injection stuff gets merged
+                // TODO: Wait until pdf + injection stuff gets merged
 
                 props = new SharelatexConnectionProperties(Globals.prefs.getShareLatexPreferences());
 
@@ -62,9 +67,7 @@ public class ShareLatexLoginDialogView extends BaseDialog<Void> {
 
             }
         } catch (Exception e) {
-
             dialogService.showErrorDialogAndWait(e);
-
         }
 
     }
