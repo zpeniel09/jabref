@@ -5,6 +5,7 @@ import javax.inject.Inject;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
@@ -12,33 +13,38 @@ import org.jabref.gui.DialogService;
 import org.jabref.gui.FXDialog;
 import org.jabref.gui.Globals;
 import org.jabref.gui.util.BaseDialog;
+import org.jabref.gui.util.ControlHelper;
 import org.jabref.logic.l10n.Localization;
 import org.jabref.logic.sharelatex.ShareLatexManager;
 import org.jabref.logic.sharelatex.SharelatexConnectionProperties;
+
+import com.airhacks.afterburner.views.ViewLoader;
 
 public class ShareLatexLoginDialogView extends BaseDialog<Void> {
 
     @FXML private TextField tbAddress;
     @FXML private TextField tbUsername;
     @FXML private PasswordField tbPassword;
-    @FXML private Button btnLogin;
+    @FXML private ButtonType connectButton;
+
+    private final Button btnLogin;
     @Inject private ShareLatexManager manager;
     @Inject private DialogService dialogService;
 
     private SharelatexConnectionProperties props;
-    private ShareLatexLoginDialogViewModel viewModel;
 
     public ShareLatexLoginDialogView() {
+        ViewLoader.view(this)
+                  .load()
+                  .setAsDialogPane(this);
+
+        ControlHelper.setAction(connectButton, this.getDialogPane(), event -> signIn());
+        btnLogin = (Button) this.getDialogPane().lookupButton(connectButton);
 
     }
 
     @FXML
     private void initialize() {
-        viewModel = new ShareLatexLoginDialogViewModel();
-    }
-
-    @FXML
-    private void closeDialog() {
     }
 
     @FXML
@@ -63,7 +69,7 @@ public class ShareLatexLoginDialogView extends BaseDialog<Void> {
 
                 ShareLatexProjectDialogView dlgprojects = new ShareLatexProjectDialogView();
                 dlgprojects.show();
-                closeDialog();
+                this.close();
 
             }
         } catch (Exception e) {
@@ -71,11 +77,5 @@ public class ShareLatexLoginDialogView extends BaseDialog<Void> {
         }
 
     }
-    /*
-        FXDialog sharelatexProjectDialog = new FXDialog(AlertType.INFORMATION, "Sharelatex Project Dialog");
-        sharelatexProjectDialog.setDialogPane((DialogPane) this.getView());
-        sharelatexProjectDialog.setResizable(true);
-        sharelatexProjectDialog.show();
-        */
 
 }

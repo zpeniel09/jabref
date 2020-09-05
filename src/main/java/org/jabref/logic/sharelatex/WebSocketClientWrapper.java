@@ -135,10 +135,10 @@ public class WebSocketClientWrapper {
                 }
             }, cec, webSocketchannelUri);
 
-            //TODO: Change Dialog
-            //TODO: On database change event or on save event send new version
-            //TODO: When new db content arrived run merge dialog
-            //TODO: Identfiy active database/Name of database/doc Id (partly done)
+            // TODO: Change Dialog
+            // TODO: On database change event or on save event send new version
+            // TODO: When new db content arrived run merge dialog
+            // TODO: Identfiy active database/Name of database/doc Id (partly done)
 
         } catch (Exception e) {
             e.printStackTrace();

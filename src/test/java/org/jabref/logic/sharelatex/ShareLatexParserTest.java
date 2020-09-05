@@ -49,14 +49,14 @@ public class ShareLatexParserTest {
 
         String message = "6:::78988+[null,[\"@book{adams1995hitchhiker,       \",\"   title={The Hitchhiker's Guide to the Galaxy},\",\"  author={Adams, D.},\",\"  isbn={9781417642595},\",\"  url={http://books.google.com/books?id=W-xMPgAACAAJ},\",\"  year={199},\",\"  publisher={San Val}\",\"}\",\"\"],74,[],{}]";
         String expected = "@book{adams1995hitchhiker,       \n" +
-                "   title={The Hitchhiker's Guide to the Galaxy},\n" +
-                "  author={Adams, D.},\n" +
-                "  isbn={9781417642595},\n" +
-                "  url={http://books.google.com/books?id=W-xMPgAACAAJ},\n" +
-                "  year={199},\n" +
-                "  publisher={San Val}\n" +
-                "}\n" +
-                "";
+                          "   title={The Hitchhiker's Guide to the Galaxy},\n" +
+                          "  author={Adams, D.},\n" +
+                          "  isbn={9781417642595},\n" +
+                          "  url={http://books.google.com/books?id=W-xMPgAACAAJ},\n" +
+                          "  year={199},\n" +
+                          "  publisher={San Val}\n" +
+                          "}\n" +
+                          "";
 
         String parsed = parser.getBibTexStringFromJsonMessage(message);
         assertEquals(expected, parsed);
@@ -183,44 +183,44 @@ public class ShareLatexParserTest {
     @Test
     public void testBibTexString() {
         String bibTexBefore = "\n" +
-                "@Testcase{Sam2007,\n" +
-                "  year      = {2007},\n" +
-                "  author    = {Sam And jason},\n" +
-                "  file      = {:Huang2001 - Information Extraction from Voicemail.csv:csv},\n" +
-                "  issue     = {3},\n" +
-                "  journal   = {Wirtschaftsinformatik},\n" +
-                "  keywords  = {software development processes; agile software development environments; time-to-market; Extreme Programming; Crystal methods family; Adaptive Software Development},\n" +
-                "  language  = {english},\n" +
-                "  mrnumber  = {0937-6429},\n" +
-                "  owner     = {Christoph Schwentker},\n" +
-                "  pages     = {237--248},\n" +
-                "  publisher = {Gabler Verlag},\n" +
-                "  timestamp = {2016.08.20},\n" +
-                "  title     = {Agile Entwicklung Web-basierter Systeme},\n" +
-                "  url       = {http://dx.doi.org/10.1007/BF03250842},\n" +
-                "  volume    = {44},\n" +
-                "}\n" +
-                "";
+                              "@Testcase{Sam2007,\n" +
+                              "  year      = {2007},\n" +
+                              "  author    = {Sam And jason},\n" +
+                              "  file      = {:Huang2001 - Information Extraction from Voicemail.csv:csv},\n" +
+                              "  issue     = {3},\n" +
+                              "  journal   = {Wirtschaftsinformatik},\n" +
+                              "  keywords  = {software development processes; agile software development environments; time-to-market; Extreme Programming; Crystal methods family; Adaptive Software Development},\n" +
+                              "  language  = {english},\n" +
+                              "  mrnumber  = {0937-6429},\n" +
+                              "  owner     = {Christoph Schwentker},\n" +
+                              "  pages     = {237--248},\n" +
+                              "  publisher = {Gabler Verlag},\n" +
+                              "  timestamp = {2016.08.20},\n" +
+                              "  title     = {Agile Entwicklung Web-basierter Systeme},\n" +
+                              "  url       = {http://dx.doi.org/10.1007/BF03250842},\n" +
+                              "  volume    = {44},\n" +
+                              "}\n" +
+                              "";
 
         String bibtexAfter = "\n" +
-                "@Testcase{Sam2007,\n" +
-                "  year      = {2007},\n" +
-                "  author    = {Sam And jason},\n" +
-                "  file      = {:Huang2001 - Information Extraction from Voicemail.csv:csv},\n" +
-                "  issue     = {3},\n" +
-                "  journal   = {Test},\n" +
-                "  keywords  = {software development processes; agile software development environments; time-to-market; Extreme Programming; Crystal methods family; Adaptive Software Development},\n" +
-                "  language  = {english},\n" +
-                "  mrnumber  = {0937-6429},\n" +
-                "  owner     = {Christoph Schwentker},\n" +
-                "  pages     = {237--248},\n" +
-                "  publisher = {Gabler Verlag},\n" +
-                "  timestamp = {2016.08.20},\n" +
-                "  title     = {Agile Entwicklung Web-basierter Systeme},\n" +
-                "  url       = {http://dx.doi.org/10.1007/BF03250842},\n" +
-                "  volume    = {44},\n" +
-                "}\n" +
-                "";
+                             "@Testcase{Sam2007,\n" +
+                             "  year      = {2007},\n" +
+                             "  author    = {Sam And jason},\n" +
+                             "  file      = {:Huang2001 - Information Extraction from Voicemail.csv:csv},\n" +
+                             "  issue     = {3},\n" +
+                             "  journal   = {Test},\n" +
+                             "  keywords  = {software development processes; agile software development environments; time-to-market; Extreme Programming; Crystal methods family; Adaptive Software Development},\n" +
+                             "  language  = {english},\n" +
+                             "  mrnumber  = {0937-6429},\n" +
+                             "  owner     = {Christoph Schwentker},\n" +
+                             "  pages     = {237--248},\n" +
+                             "  publisher = {Gabler Verlag},\n" +
+                             "  timestamp = {2016.08.20},\n" +
+                             "  title     = {Agile Entwicklung Web-basierter Systeme},\n" +
+                             "  url       = {http://dx.doi.org/10.1007/BF03250842},\n" +
+                             "  volume    = {44},\n" +
+                             "}\n" +
+                             "";
 
         List<SharelatexDoc> expected = new ArrayList<>();
         SharelatexDoc testDoc = new SharelatexDoc();

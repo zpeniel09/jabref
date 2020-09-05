@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
 
-import org.jabref.gui.AbstractViewModel;
 import org.jabref.gui.StateManager;
 import org.jabref.logic.importer.ImportFormatPreferences;
 import org.jabref.logic.importer.ParserResult;
@@ -28,7 +27,7 @@ import com.google.common.eventbus.Subscribe;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public class ShareLatexProjectDialogViewModel extends AbstractViewModel {
+public class ShareLatexProjectDialogViewModel{
 
     private static final Log LOGGER = LogFactory.getLog(ShareLatexProjectDialogViewModel.class);
 

@@ -40,14 +40,14 @@ public class SharelatexConnector {
     private final WebSocketClientWrapper client = new WebSocketClientWrapper();
 
     private static final class AccessData {
-        public final String CsrfToken;
-        public final String User;
-        public final String Password;
+        public final String _csrf;
+        public final String email;
+        public final String password;
 
         private AccessData(String csrfToken, String user, String password) {
-            CsrfToken = csrfToken;
-            User = user;
-            Password = password;
+            _csrf = csrfToken;
+            email = user;
+            this.password = password;
         }
     }
 
