@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jabref.Globals;
+import org.jabref.architecture.AllowedToUseAwt;
 import org.jabref.gui.actions.ActionHelper;
 import org.jabref.gui.actions.SimpleCommand;
 import org.jabref.gui.desktop.JabRefDesktop;
@@ -25,15 +25,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Sends the selected entry as email - by Oliver Kopp
- *
+ * Sends the selected entry as email
+ * <p>
  * It uses the mailto:-mechanism
- *
+ * <p>
  * Microsoft Outlook does not support attachments via mailto
  * Therefore, the folder(s), where the file(s) belonging to the entry are stored,
  * are opened. This feature is disabled by default and can be switched on at
  * preferences/external programs
  */
+@AllowedToUseAwt("Requires AWT to send an email")
 public class SendAsEMailAction extends SimpleCommand {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SendAsEMailAction.class);

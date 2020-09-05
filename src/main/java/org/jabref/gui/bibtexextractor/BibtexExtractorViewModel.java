@@ -8,8 +8,8 @@ import javax.swing.undo.UndoManager;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
-import org.jabref.Globals;
 import org.jabref.gui.DialogService;
+import org.jabref.gui.Globals;
 import org.jabref.gui.StateManager;
 import org.jabref.gui.externalfiles.ImportHandler;
 import org.jabref.gui.externalfiletype.ExternalFileTypes;
@@ -57,14 +57,14 @@ public class BibtexExtractorViewModel {
 
     public void startParsing() {
         BackgroundTask.wrap(() -> currentCitationfetcher.performSearch(inputTextProperty.getValue()))
-                .onRunning(() -> dialogService.notify(Localization.lang("Your text is being parsed...")))
-                .onSuccess(parsedEntries -> {
-                    dialogService.notify(Localization.lang("%0 entries were parsed from your query.", String.valueOf(parsedEntries.size())));
-                    importHandler.importEntries(parsedEntries);
-                    for (BibEntry bibEntry : parsedEntries) {
-                        trackNewEntry(bibEntry);
-                    }
-                }).executeWith(taskExecutor);
+                      .onRunning(() -> dialogService.notify(Localization.lang("Your text is being parsed...")))
+                      .onSuccess(parsedEntries -> {
+                          dialogService.notify(Localization.lang("%0 entries were parsed from your query.", String.valueOf(parsedEntries.size())));
+                          importHandler.importEntries(parsedEntries);
+                          for (BibEntry bibEntry : parsedEntries) {
+                              trackNewEntry(bibEntry);
+                          }
+                      }).executeWith(taskExecutor);
     }
 
     private void trackNewEntry(BibEntry bibEntry) {
