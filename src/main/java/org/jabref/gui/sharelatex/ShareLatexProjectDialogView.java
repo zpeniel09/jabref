@@ -46,6 +46,8 @@ public class ShareLatexProjectDialogView extends BaseDialog<Void> {
 
     public ShareLatexProjectDialogView() {
 
+        this.setTitle("Overleaf projects");
+
         ViewLoader.view(this)
                   .load()
                   .setAsDialogPane(this);
