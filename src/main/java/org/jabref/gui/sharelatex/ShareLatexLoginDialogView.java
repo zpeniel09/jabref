@@ -19,8 +19,12 @@ import org.jabref.logic.sharelatex.ShareLatexManager;
 import org.jabref.logic.sharelatex.SharelatexConnectionProperties;
 
 import com.airhacks.afterburner.views.ViewLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ShareLatexLoginDialogView extends BaseDialog<Void> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShareLatexLoginDialogView.class);
 
     @FXML private TextField tbAddress;
     @FXML private TextField tbUsername;
@@ -57,7 +61,7 @@ public class ShareLatexLoginDialogView extends BaseDialog<Void> {
                 dlg.setContentText("Your email or password is incorrect. Please try again");
                 dlg.showAndWait();
             } else {
-                // TODO: Wait until pdf + injection stuff gets merged
+                // TODO: Replace with PreferencesService later
 
                 props = new SharelatexConnectionProperties(Globals.prefs.getShareLatexPreferences());
 
@@ -73,6 +77,7 @@ public class ShareLatexLoginDialogView extends BaseDialog<Void> {
 
             }
         } catch (Exception e) {
+            LOGGER.error("Problems connectiong", e);
             dialogService.showErrorDialogAndWait(e);
         }
 

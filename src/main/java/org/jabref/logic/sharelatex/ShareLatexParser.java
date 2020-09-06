@@ -174,7 +174,7 @@ public class ShareLatexParser {
 
                 JsonObject owner = elem.getAsJsonObject().get("owner").getAsJsonObject();
                 String firstName = owner.get("first_name").getAsString();
-                String lastName = owner.get("last_name").getAsString();
+                String lastName = owner.get("email").getAsString();
 
                 ShareLatexProject project = new ShareLatexProject(id, name, firstName, lastName, lastUpdated);
                 projects.add(project);

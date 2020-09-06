@@ -31,7 +31,7 @@ public class SharelatexConnector {
 
     private final String contentType = "application/json; charset=utf-8";
     private final JsonParser parser = new JsonParser();
-    private final String userAgent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:53.0) Gecko/20100101 Firefox/53.0";
+    private final String userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:80.0) Gecko/20100101 Firefox/80.0";
     private Map<String, String> loginCookies = new HashMap<>();
     private String server;
     private String loginUrl;
