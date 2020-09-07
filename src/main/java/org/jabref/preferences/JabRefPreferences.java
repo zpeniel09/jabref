@@ -441,8 +441,7 @@ public class JabRefPreferences implements PreferencesService {
         // Set DOI to be the default ID entry generator
         defaults.put(ID_ENTRY_GENERATOR, DoiFetcher.NAME);
 
-
-        //Sharelatex
+        // Sharelatex
         defaults.put(DEFAULT_NODE, "default");
         defaults.put(PARENT_NODE, "jabref-sharelatex");
 

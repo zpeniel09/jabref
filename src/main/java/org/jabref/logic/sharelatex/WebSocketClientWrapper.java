@@ -233,7 +233,7 @@ public class WebSocketClientWrapper {
 
             if (message.startsWith("[null,{", message.indexOf("+") + 1)) {
                 LOGGER.debug("We get a list with all files");
-                //We get a list with all files
+                // We get a list with all files
 
                 String docIdOfFirstBibtex = parser.getFirstBibTexDatabaseId(message);
 

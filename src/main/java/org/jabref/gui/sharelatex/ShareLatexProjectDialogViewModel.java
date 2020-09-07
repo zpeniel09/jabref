@@ -27,7 +27,7 @@ import com.google.common.eventbus.Subscribe;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public class ShareLatexProjectDialogViewModel{
+public class ShareLatexProjectDialogViewModel {
 
     private static final Log LOGGER = LogFactory.getLog(ShareLatexProjectDialogViewModel.class);
 
