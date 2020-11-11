@@ -18,6 +18,7 @@ import javafx.geometry.Point2D;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.InputMethodRequests;
+import javafx.scene.input.KeyEvent;
 
 import org.jabref.gui.DialogService;
 import org.jabref.gui.Globals;
@@ -26,6 +27,7 @@ import org.jabref.gui.actions.ActionFactory;
 import org.jabref.gui.actions.SimpleCommand;
 import org.jabref.gui.actions.StandardActions;
 import org.jabref.gui.icon.IconTheme;
+import org.jabref.gui.keyboard.CodeAreaKeyBindings;
 import org.jabref.gui.keyboard.KeyBindingRepository;
 import org.jabref.gui.undo.CountingUndoManager;
 import org.jabref.gui.undo.NamedCompound;
@@ -85,18 +87,10 @@ public class SourceTab extends EntryEditorTab {
         @Override
         public void execute() {
             switch (command) {
-                case COPY:
-                    codeArea.copy();
-                    break;
-                case CUT:
-                    codeArea.cut();
-                    break;
-                case PASTE:
-                    codeArea.paste();
-                    break;
-                case SELECT_ALL:
-                    codeArea.selectAll();
-                    break;
+                case COPY -> codeArea.copy();
+                case CUT -> codeArea.cut();
+                case PASTE -> codeArea.paste();
+                case SELECT_ALL -> codeArea.selectAll();
             }
             codeArea.requestFocus();
         }
@@ -133,7 +127,7 @@ public class SourceTab extends EntryEditorTab {
         }
     }
 
-    private static String getSourceString(BibEntry entry, BibDatabaseMode type, FieldWriterPreferences fieldWriterPreferences) throws IOException {
+    private String getSourceString(BibEntry entry, BibDatabaseMode type, FieldWriterPreferences fieldWriterPreferences) throws IOException {
         StringWriter stringWriter = new StringWriter(200);
         FieldWriter fieldWriter = FieldWriter.buildIgnoreHashes(fieldWriterPreferences);
         new BibEntryWriter(fieldWriter, Globals.entryTypesManager).writeWithoutPrependedNewlines(entry, stringWriter, type);
@@ -178,6 +172,7 @@ public class SourceTab extends EntryEditorTab {
             }
         });
         codeArea.setId("bibtexSourceCodeArea");
+        codeArea.addEventFilter(KeyEvent.KEY_PRESSED, event -> CodeAreaKeyBindings.call(codeArea, event));
 
         ActionFactory factory = new ActionFactory(keyBindingRepository);
         ContextMenu contextMenu = new ContextMenu();
@@ -224,6 +219,7 @@ public class SourceTab extends EntryEditorTab {
             codeArea.clear();
             try {
                 codeArea.appendText(getSourceString(currentEntry, mode, fieldWriterPreferences));
+                codeArea.setEditable(true);
                 highlightSearchPattern();
             } catch (IOException ex) {
                 codeArea.setEditable(false);
@@ -278,10 +274,10 @@ public class SourceTab extends EntryEditorTab {
 
             NamedCompound compound = new NamedCompound(Localization.lang("source edit"));
             BibEntry newEntry = database.getEntries().get(0);
-            String newKey = newEntry.getCiteKeyOptional().orElse(null);
+            String newKey = newEntry.getCitationKey().orElse(null);
 
             if (newKey != null) {
-                outOfFocusEntry.setCiteKey(newKey);
+                outOfFocusEntry.setCitationKey(newKey);
             } else {
                 outOfFocusEntry.clearCiteKey();
             }

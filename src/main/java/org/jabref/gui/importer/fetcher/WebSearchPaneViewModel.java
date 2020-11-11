@@ -63,7 +63,7 @@ public class WebSearchPaneViewModel {
             preferences.putInt(JabRefPreferences.SELECTED_FETCHER_INDEX, newIndex);
         });
 
-        String allowedFields = "((author|journal|title|year|year-range):\\s?)?";
+        String allowedFields = "((author|abstract|journal|title|year|year-range):\\s?)?";
         // Either a single word, or a phrase with quotes, or a year-range
         String allowedTermText = "(((\\d{4}-\\d{4})|(\\w+)|(\"\\w+[^\"]*\"))\\s?)+";
         queryPattern = Pattern.compile("^(" + allowedFields + allowedTermText + ")+$");
@@ -101,7 +101,7 @@ public class WebSearchPaneViewModel {
             return;
         }
 
-        if (frame.getCurrentBasePanel() == null) {
+        if (frame.getCurrentLibraryTab() == null) {
             dialogService.notify(Localization.lang("Please open or start a new library before searching"));
             return;
         }
@@ -120,7 +120,7 @@ public class WebSearchPaneViewModel {
         }
         task.onFailure(dialogService::showErrorDialogAndWait);
 
-        ImportEntriesDialog dialog = new ImportEntriesDialog(frame.getCurrentBasePanel().getBibDatabaseContext(), task);
+        ImportEntriesDialog dialog = new ImportEntriesDialog(frame.getCurrentLibraryTab().getBibDatabaseContext(), task);
         dialog.setTitle(activeFetcher.getName());
         dialog.showAndWait();
     }

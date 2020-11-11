@@ -19,10 +19,10 @@ import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
 
 import org.jabref.gui.AbstractViewModel;
-import org.jabref.gui.BasePanel;
 import org.jabref.gui.DialogService;
 import org.jabref.gui.Globals;
 import org.jabref.gui.JabRefFrame;
+import org.jabref.gui.LibraryTab;
 import org.jabref.gui.exporter.SaveDatabaseAction;
 import org.jabref.gui.help.HelpAction;
 import org.jabref.gui.util.FileDialogConfiguration;
@@ -86,9 +86,7 @@ public class SharedDatabaseLoginDialogViewModel extends AbstractViewModel {
         this.frame = frame;
         this.dialogService = dialogService;
 
-        EasyBind.subscribe(selectedDBMSType, selected -> {
-            port.setValue(Integer.toString(selected.getDefaultPort()));
-        });
+        EasyBind.subscribe(selectedDBMSType, selected -> port.setValue(Integer.toString(selected.getDefaultPort())));
 
         Predicate<String> notEmpty = input -> (input != null) && !input.trim().isEmpty();
         Predicate<String> fileExists = input -> Files.exists(Path.of(input));
@@ -123,8 +121,7 @@ public class SharedDatabaseLoginDialogViewModel extends AbstractViewModel {
                 .createDBMSConnectionProperties();
 
         setupKeyStore();
-        boolean connected = openSharedDatabase(connectionProperties);
-        return connected;
+        return openSharedDatabase(connectionProperties);
     }
 
     private void setupKeyStore() {
@@ -160,12 +157,12 @@ public class SharedDatabaseLoginDialogViewModel extends AbstractViewModel {
 
         try {
             SharedDatabaseUIManager manager = new SharedDatabaseUIManager(frame);
-            BasePanel panel = manager.openNewSharedDatabaseTab(connectionProperties);
+            LibraryTab libraryTab = manager.openNewSharedDatabaseTab(connectionProperties);
             setPreferences();
 
             if (!folder.getValue().isEmpty()) {
                 try {
-                    new SaveDatabaseAction(panel, Globals.prefs, Globals.entryTypesManager).saveAs(Path.of(folder.getValue()));
+                    new SaveDatabaseAction(libraryTab, Globals.prefs, Globals.entryTypesManager).saveAs(Path.of(folder.getValue()));
                 } catch (Throwable e) {
                     LOGGER.error("Error while saving the database", e);
                 }
@@ -254,7 +251,7 @@ public class SharedDatabaseLoginDialogViewModel extends AbstractViewModel {
     }
 
     private boolean isSharedDatabaseAlreadyPresent(DBMSConnectionProperties connectionProperties) {
-        List<BasePanel> panels = frame.getBasePanelList();
+        List<LibraryTab> panels = frame.getLibraryTabs();
         return panels.parallelStream().anyMatch(panel -> {
             BibDatabaseContext context = panel.getBibDatabaseContext();
 
@@ -270,9 +267,7 @@ public class SharedDatabaseLoginDialogViewModel extends AbstractViewModel {
                 .withInitialDirectory(Globals.prefs.get(JabRefPreferences.WORKING_DIRECTORY))
                 .build();
         Optional<Path> exportPath = dialogService.showFileSaveDialog(fileDialogConfiguration);
-        exportPath.ifPresent(path -> {
-            folder.setValue(path.toString());
-        });
+        exportPath.ifPresent(path -> folder.setValue(path.toString()));
     }
 
     public void showOpenKeystoreFileDialog() {
@@ -283,9 +278,7 @@ public class SharedDatabaseLoginDialogViewModel extends AbstractViewModel {
                 .withInitialDirectory(Globals.prefs.get(JabRefPreferences.WORKING_DIRECTORY))
                 .build();
         Optional<Path> keystorePath = dialogService.showFileOpenDialog(fileDialogConfiguration);
-        keystorePath.ifPresent(path -> {
-            keystore.setValue(path.toString());
-        });
+        keystorePath.ifPresent(path -> keystore.setValue(path.toString()));
     }
 
     public StringProperty databaseproperty() {
