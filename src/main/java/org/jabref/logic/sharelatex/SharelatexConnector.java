@@ -109,6 +109,9 @@ public class SharelatexConnector {
         Connection.Response projectsResponse = Jsoup.connect(projectUrl)
                 .referrer(loginUrl).cookies(loginCookies).method(Method.GET).userAgent(userAgent).execute();
 
+        var projectCookies = projectsResponse.cookies();
+        this.loginCookies = projectCookies;
+
         Optional<Element> scriptContent = Optional
                 .of(projectsResponse.parse().select("script#data").first());
 
@@ -139,6 +142,8 @@ public class SharelatexConnector {
             System.out.println(webSocketresponse.body());
 
             String resp = webSocketresponse.body();
+
+            var cookies = webSocketresponse.cookies();
             String channel = resp.substring(0, resp.indexOf(":"));
 
             URI webSocketchannelUri = new URIBuilder(socketioUrl + "/websocket/" + channel).setScheme(scheme).build();
