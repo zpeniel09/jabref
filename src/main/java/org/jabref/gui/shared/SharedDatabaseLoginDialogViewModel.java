@@ -39,7 +39,6 @@ import org.jabref.logic.shared.prefs.SharedDatabasePreferences;
 import org.jabref.logic.shared.security.Password;
 import org.jabref.logic.util.StandardFileType;
 import org.jabref.model.database.BibDatabaseContext;
-import org.jabref.preferences.JabRefPreferences;
 
 import com.tobiasdiez.easybind.EasyBind;
 import de.saxsys.mvvmfx.utils.validation.CompositeValidator;
@@ -203,8 +202,8 @@ public class SharedDatabaseLoginDialogViewModel extends AbstractViewModel {
 
         if (rememberPassword.get()) {
             try {
-                prefs.setPassword(new Password(password.getValue(), password.getValue()).encrypt());
-            } catch (GeneralSecurityException e) {
+                prefs.setPassword(new Password(password.getValue(), user.getValue()).encrypt());
+            } catch (GeneralSecurityException | UnsupportedEncodingException e) {
                 LOGGER.error("Could not store the password due to encryption problems.", e);
             }
         } else {
@@ -264,7 +263,7 @@ public class SharedDatabaseLoginDialogViewModel extends AbstractViewModel {
         FileDialogConfiguration fileDialogConfiguration = new FileDialogConfiguration.Builder()
                 .addExtensionFilter(StandardFileType.BIBTEX_DB)
                 .withDefaultExtension(StandardFileType.BIBTEX_DB)
-                .withInitialDirectory(Globals.prefs.get(JabRefPreferences.WORKING_DIRECTORY))
+                .withInitialDirectory(Globals.prefs.getWorkingDir())
                 .build();
         Optional<Path> exportPath = dialogService.showFileSaveDialog(fileDialogConfiguration);
         exportPath.ifPresent(path -> folder.setValue(path.toString()));
@@ -275,7 +274,7 @@ public class SharedDatabaseLoginDialogViewModel extends AbstractViewModel {
                 .addExtensionFilter(FileFilterConverter.ANY_FILE)
                 .addExtensionFilter(StandardFileType.JAVA_KEYSTORE)
                 .withDefaultExtension(StandardFileType.JAVA_KEYSTORE)
-                .withInitialDirectory(Globals.prefs.get(JabRefPreferences.WORKING_DIRECTORY))
+                .withInitialDirectory(Globals.prefs.getWorkingDir())
                 .build();
         Optional<Path> keystorePath = dialogService.showFileOpenDialog(fileDialogConfiguration);
         keystorePath.ifPresent(path -> keystore.setValue(path.toString()));
