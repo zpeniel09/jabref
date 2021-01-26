@@ -215,8 +215,13 @@ public class WebSocketClientWrapper {
             System.out.println("Got message: " + message);
             if (message.contains(":::1")) {
 
-                Thread.currentThread().sleep(300);
-                LOGGER.debug("Got :::1. Joining project");
+                Thread.currentThread().sleep(400);
+                LOGGER.debug("After sleep in :::1");
+
+                //TODO: Does not work reliable we often get 7:::1+0 this is an error somehow
+                // we need to get connection accepted with 5
+
+                // joinProject(projectId);
 
             }
             if (message.contains("2::")) {
@@ -242,9 +247,9 @@ public class WebSocketClientWrapper {
                 joinDoc(docId);
 
             }
-            if (message.contains("{\"name\":\"connectionAccepted\"}") && (projectId != null)) {
+            if (message.contains("{\"name\":\"connectionAccepted\"") && (projectId != null)) {
 
-                LOGGER.debug("Joining project");
+                LOGGER.debug(" Conn accepted +Joining project");
                 Thread.sleep(200);
                 joinProject(projectId);
 

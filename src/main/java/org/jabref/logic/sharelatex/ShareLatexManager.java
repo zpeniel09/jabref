@@ -1,12 +1,14 @@
 package org.jabref.logic.sharelatex;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
 
 import org.jabref.gui.Globals;
 import org.jabref.gui.JabRefExecutorService;
+import org.jabref.logic.exporter.BibtexDatabaseWriter;
 import org.jabref.logic.exporter.SavePreferences;
 import org.jabref.logic.importer.ImportFormatPreferences;
 import org.jabref.model.database.BibDatabaseContext;
@@ -59,21 +61,19 @@ public class ShareLatexManager {
     public void sendNewDatabaseContent(BibDatabaseContext bibDatabaseContext) {
         try {
             SavePreferences prefs = Globals.prefs.getSavePreferences();
-            // TODO FIXME important
-            /*
-            AtomicFileWriter fileWriter = new AtomicFileWriter(Paths.get(""), savePreferences.getEncoding());
 
-            StringWriter strWriter = new StringWriter();
-            BibtexDatabaseWriter stringdbWriter = new BibtexDatabaseWriter(strWriter, savePreferences, Globals.entryTypesManager)
+            StringWriter outputWriter = new StringWriter();
+            BibtexDatabaseWriter databaseWriter = new BibtexDatabaseWriter(outputWriter, prefs, Globals.entryTypesManager);
+            databaseWriter.savePartOfDatabase(bibDatabaseContext, bibDatabaseContext.getEntries());
 
-                fileWriter.saveDatabase, savePreferences);
+            String content = outputWriter.toString().replace("\r\n", "\n");
 
-              stringdbWriter.saveDatabase(database);
-            String updatedcontent = saveSession.getStringValue().replace("\r\n", "\n");
-            */
-            connector.sendNewDatabaseContent("");
+            connector.sendNewDatabaseContent(content);
         } catch (InterruptedException e) {
             LOGGER.error("Could not prepare database for saving ", e);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
     }
 
