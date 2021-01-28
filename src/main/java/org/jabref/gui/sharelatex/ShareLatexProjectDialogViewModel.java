@@ -76,7 +76,7 @@ public class ShareLatexProjectDialogViewModel {
                     Optional<BibEntry> entryFromSharelatex = entries.stream().filter(searchEntry -> searchEntry.equals(identifedEntry)).findFirst();
 
                     // We search the local database for an entry with the cite key
-                    Optional<BibEntry> entryFromLocalDatabase = stateManager.getActiveDatabase().get().getDatabase().getEntryByKey(identifedEntry.getCiteKeyOptional().get());
+                    Optional<BibEntry> entryFromLocalDatabase = stateManager.getActiveDatabase().get().getDatabase().getEntryByCitationKey(identifedEntry.getCitationKey().get());
 
                     if (entryFromSharelatex.isPresent() && entryFromLocalDatabase.isPresent()) {
 

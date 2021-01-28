@@ -110,7 +110,7 @@ public class SharelatexConnector {
                 .referrer(loginUrl).cookies(loginCookies).method(Method.GET).userAgent(userAgent).execute();
 
         Optional<Element> scriptContent = Optional
-                .of(projectsResponse.parse().select("script#data").first());
+                .ofNullable(projectsResponse.parse().select("script#data").first());
 
         if (scriptContent.isPresent()) {
 

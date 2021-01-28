@@ -242,7 +242,7 @@ public class WebSocketClientWrapper {
                 joinDoc(docId);
 
             }
-            if (message.contains("{\"name\":\"connectionAccepted\"}") && (projectId != null)) {
+            if (message.contains("{\"name\":\"connectionAccepted\"") && (projectId != null)) {
 
                 LOGGER.debug("Joining project");
                 Thread.sleep(200);
