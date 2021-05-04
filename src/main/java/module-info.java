@@ -63,7 +63,7 @@ open module org.jabref {
     requires commons.logging;
     requires com.google.common;
     requires jakarta.inject;
-    requires org.apache.pdfbox;
+    requires pdfbox;
     requires reactfx;
     requires commons.cli;
     requires com.github.tomtung.latex2unicode;
@@ -71,7 +71,7 @@ open module org.jabref {
     requires jbibtex;
     requires citeproc.java;
     requires antlr.runtime;
-    requires org.apache.xmpbox;
+    requires xmpbox;
     requires de.saxsys.mvvmfx.validation;
     requires com.google.gson;
     requires unirest.java;

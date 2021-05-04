@@ -129,7 +129,7 @@ class XmpUtilWriterTest {
         try (PDDocument pdf = new PDDocument()) {
             // Need a single page to open in Acrobat
             pdf.addPage(new PDPage());
-            pdf.save(pdfFile.toAbsolutePath().toString());
+            pdf.save(pdfFile.toAbsolutePath().toFile());
         }
 
         return pdfFile;

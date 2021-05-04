@@ -26,8 +26,13 @@ import org.jabref.model.strings.StringUtil;
 
 import org.apache.xmpbox.DateConverter;
 import org.apache.xmpbox.schema.DublinCoreSchema;
+import org.apache.xmpbox.type.BadFieldValueException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DublinCoreExtractor {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DublinCoreExtractor.class);
 
     private final DublinCoreSchema dcSchema;
     private final XmpPreferences xmpPreferences;
@@ -97,8 +102,9 @@ public class DublinCoreExtractor {
 
     /**
      * Abstract in BibTex - Description in DublinCore
+     * @throws BadFieldValueException
      */
-    private void extractAbstract() {
+    private void extractAbstract() throws BadFieldValueException {
         String description = dcSchema.getDescription();
         if (!StringUtil.isNullOrEmpty(description)) {
             bibEntry.setField(StandardField.ABSTRACT, description);
@@ -163,8 +169,9 @@ public class DublinCoreExtractor {
 
     /**
      * Rights are equivalent in both formats (BibTex and DublinCore)
+     * @throws BadFieldValueException
      */
-    private void extractRights() {
+    private void extractRights() throws BadFieldValueException {
         String rights = dcSchema.getRights();
         if (!StringUtil.isNullOrEmpty(rights)) {
             bibEntry.setField(new UnknownField("rights"), rights);
@@ -193,8 +200,9 @@ public class DublinCoreExtractor {
 
     /**
      * Title is equivalent in both formats (BibTex and DublinCore)
+     * @throws BadFieldValueException
      */
-    private void extractTitle() {
+    private void extractTitle() throws BadFieldValueException {
         String title = dcSchema.getTitle();
         if (!StringUtil.isNullOrEmpty(title)) {
             bibEntry.setField(StandardField.TITLE, title);
@@ -229,18 +237,23 @@ public class DublinCoreExtractor {
         // first extract "bibtex/" entries
         this.extractBibTexFields();
 
-        // then extract all "standard" dublin core entries
-        this.extractEditor();
-        this.extractAuthor();
-        this.extractYearAndMonth();
-        this.extractAbstract();
-        this.extractDOI();
-        this.extractPublisher();
-        this.extractRights();
-        this.extractSource();
-        this.extractSubject();
-        this.extractTitle();
-        this.extractType();
+        try {
+            // then extract all "standard" dublin core entries
+            this.extractEditor();
+            this.extractAuthor();
+            this.extractYearAndMonth();
+            this.extractAbstract();
+            this.extractDOI();
+            this.extractPublisher();
+            this.extractRights();
+            this.extractSource();
+            this.extractSubject();
+            this.extractTitle();
+            this.extractType();
+
+        } catch (BadFieldValueException ex) {
+            LOGGER.error("Error extracting data from XMP", ex);
+        }
 
         // we pass a new BibEntry in the constructor which is never empty as it already consists of "@misc"
         if (bibEntry.getFieldMap().isEmpty()) {
