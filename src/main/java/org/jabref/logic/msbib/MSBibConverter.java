@@ -43,6 +43,8 @@ public class MSBibConverter {
         entry.getLatexFreeField(StandardField.PAGES).ifPresent(pages -> result.pages = new PageNumbers(pages));
         entry.getLatexFreeField(new UnknownField(MSBIB_PREFIX + "accessed")).ifPresent(accesed -> result.dateAccessed = accesed);
 
+        entry.getLatexFreeField(StandardField.URLDATE).ifPresent(acessed -> result.dateAccessed = acessed);
+
         // TODO: currently this can never happen
         if ("SoundRecording".equals(msBibType)) {
             result.albumTitle = entry.getLatexFreeField(StandardField.TITLE).orElse(null);
@@ -61,7 +63,7 @@ public class MSBibConverter {
         }
 
         result.day = entry.getFieldOrAliasLatexFree(StandardField.DAY).orElse(null);
-        result.month = entry.getMonth().map(Month::getNumber).map(Object::toString).orElse(null);
+        result.month = entry.getMonth().map(Month::getFullName).orElse(null);
 
         if (!entry.getLatexFreeField(StandardField.YEAR).isPresent()) {
             result.year = entry.getFieldOrAliasLatexFree(StandardField.YEAR).orElse(null);
