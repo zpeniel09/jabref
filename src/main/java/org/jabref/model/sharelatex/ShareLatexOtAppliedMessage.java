@@ -6,7 +6,7 @@ import java.util.List;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-public class SharelatexOtAppliedMessage {
+public class ShareLatexOtAppliedMessage {
 
     @SerializedName("name") @Expose private String name;
     @SerializedName("args") @Expose private List<Arg> args = new ArrayList<>();
@@ -26,5 +26,4 @@ public class SharelatexOtAppliedMessage {
     public void setArgs(List<Arg> args) {
         this.args = args;
     }
-
 }

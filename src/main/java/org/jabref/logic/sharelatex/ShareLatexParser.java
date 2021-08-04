@@ -14,7 +14,7 @@ import org.jabref.logic.importer.ParserResult;
 import org.jabref.logic.importer.fileformat.BibtexParser;
 import org.jabref.model.entry.BibEntry;
 import org.jabref.model.sharelatex.ShareLatexProject;
-import org.jabref.model.sharelatex.SharelatexOtAppliedMessage;
+import org.jabref.model.sharelatex.ShareLatexOtAppliedMessage;
 import org.jabref.model.util.FileUpdateMonitor;
 
 import com.github.difflib.DiffUtils;
@@ -41,9 +41,9 @@ public class ShareLatexParser {
         return array.get(2).getAsInt();
     }
 
-    public SharelatexOtAppliedMessage getOtAppliedMessage(String content) {
+    public ShareLatexOtAppliedMessage getOtAppliedMessage(String content) {
         String strs = content.substring(content.indexOf("{"), content.length());
-        SharelatexOtAppliedMessage message = gson.fromJson(strs, SharelatexOtAppliedMessage.class);
+        ShareLatexOtAppliedMessage message = gson.fromJson(strs, ShareLatexOtAppliedMessage.class);
         return message;
     }
 
@@ -51,7 +51,7 @@ public class ShareLatexParser {
 
         String strs = content.substring(content.indexOf("{"), content.length());
 
-        SharelatexOtAppliedMessage message = gson.fromJson(strs, SharelatexOtAppliedMessage.class);
+        ShareLatexOtAppliedMessage message = gson.fromJson(strs, ShareLatexOtAppliedMessage.class);
         return message.getArgs().get(0).getOp().get(0).getPosition();
 
         //   5:::{"name":"otUpdateApplied","args":[{"doc":"5a797ca3b42d76683b3ea200","op":[{"p":633,"d":"A. Viterbi"}],"v":71,"meta":{"source":"x3f_9gg_sYE1IC9v_oTa","user_id":"5a797c98b42d76683b3ea1fc","ts":1517997414640}}]}

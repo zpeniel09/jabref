@@ -25,7 +25,7 @@ import org.jabref.logic.sharelatex.events.ShareLatexEntryMessageEvent;
 import org.jabref.logic.sharelatex.events.ShareLatexErrorMessageEvent;
 import org.jabref.model.database.BibDatabaseContext;
 import org.jabref.model.entry.BibEntry;
-import org.jabref.model.sharelatex.SharelatexOtAppliedMessage;
+import org.jabref.model.sharelatex.ShareLatexOtAppliedMessage;
 import org.jabref.model.util.FileUpdateMonitor;
 
 import com.google.common.eventbus.EventBus;
@@ -50,7 +50,7 @@ public class WebSocketClientWrapper {
     private String docId;
     private String projectId;
     private String databaseName;
-    private SharelatexOtAppliedMessage otAppliedMessage = new SharelatexOtAppliedMessage();
+    private ShareLatexOtAppliedMessage otAppliedMessage = new ShareLatexOtAppliedMessage();
     private final EventBus eventBus = new EventBus("SharelatexEventBus");
     private boolean leftDoc = false;
     private boolean errorReceived = false;

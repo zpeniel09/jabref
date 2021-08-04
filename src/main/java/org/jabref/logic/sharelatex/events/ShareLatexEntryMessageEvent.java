@@ -6,16 +6,16 @@ import java.util.List;
 import org.jabref.model.entry.BibEntry;
 import org.jabref.model.sharelatex.Arg;
 import org.jabref.model.sharelatex.Op;
-import org.jabref.model.sharelatex.SharelatexOtAppliedMessage;
+import org.jabref.model.sharelatex.ShareLatexOtAppliedMessage;
 
 public class ShareLatexEntryMessageEvent {
 
     private List<BibEntry> entries = new ArrayList<>();
 
     private final String database;
-    private final SharelatexOtAppliedMessage message;
+    private final ShareLatexOtAppliedMessage message;
 
-    public ShareLatexEntryMessageEvent(List<BibEntry> entries, String database, SharelatexOtAppliedMessage message) {
+    public ShareLatexEntryMessageEvent(List<BibEntry> entries, String database, ShareLatexOtAppliedMessage message) {
         this.entries = entries;
         this.database = database;
         this.message = message;
@@ -47,7 +47,7 @@ public class ShareLatexEntryMessageEvent {
 
     }
 
-    private Op getOpFromAtPosZero(SharelatexOtAppliedMessage message) {
+    private Op getOpFromAtPosZero(ShareLatexOtAppliedMessage message) {
         if (!this.message.getArgs().isEmpty()) {
             Arg arg = message.getArgs().get(0);
             List<Op> ops = arg.getOp();
