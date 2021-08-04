@@ -1,23 +1,13 @@
 package org.jabref.gui.actions;
 
-import java.awt.event.ActionEvent;
-
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-
 import org.jabref.gui.Globals;
 import org.jabref.gui.StateManager;
 import org.jabref.logic.sharelatex.ShareLatexManager;
 
-public class SendChangesToShareLatexAction extends AbstractAction {
-
-    public SendChangesToShareLatexAction() {
-        super();
-        putValue(Action.NAME, "Send changes to ShareLaTeX Server");
-    }
+public class SendChangesToShareLatexAction extends SimpleCommand {
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void execute() {
         ShareLatexManager manager = Globals.shareLatexManager;
         StateManager stateManager = Globals.stateManager;
         manager.sendNewDatabaseContent(stateManager.getActiveDatabase().get());

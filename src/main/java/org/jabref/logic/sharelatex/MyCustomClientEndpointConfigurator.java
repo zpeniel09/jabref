@@ -10,7 +10,7 @@ import javax.websocket.HandshakeResponse;
 
 public class MyCustomClientEndpointConfigurator extends ClientEndpointConfig.Configurator {
 
-    private final String userAgent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:53.0) Gecko/20100101 Firefox/53.0";
+    private final String userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.16; rv:84.0) Gecko/20100101 Firefox/84.0";
     private final String serverOrigin;
     private final Map<String, String> cookies;
 
