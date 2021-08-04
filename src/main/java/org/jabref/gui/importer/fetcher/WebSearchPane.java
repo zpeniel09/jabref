@@ -1,10 +1,12 @@
 package org.jabref.gui.importer.fetcher;
 
+import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -30,6 +32,8 @@ import org.jabref.preferences.PreferencesService;
 import com.tobiasdiez.easybind.EasyBind;
 
 public class WebSearchPane extends SidePaneComponent {
+
+    private static final PseudoClass QUERY_INVALID = PseudoClass.getPseudoClass("invalid");
 
     private final PreferencesService preferences;
     private final WebSearchPaneViewModel viewModel;
@@ -73,16 +77,18 @@ public class WebSearchPane extends SidePaneComponent {
         // Create text field for query input
         TextField query = SearchTextField.create();
         query.getStyleClass().add("searchBar");
-        query.textProperty().addListener((observable, oldValue, newValue) -> viewModel.validateQueryStringAndGiveColorFeedback(query, newValue));
-        query.focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue) {
-                viewModel.validateQueryStringAndGiveColorFeedback(query, query.getText());
-            } else {
-                viewModel.setPseudoClassToValid(query);
-            }
-        });
 
         viewModel.queryProperty().bind(query.textProperty());
+        EasyBind.subscribe(viewModel.queryValidationStatus().validProperty(),
+                valid -> {
+                    if (!valid && viewModel.queryValidationStatus().getHighestMessage().isPresent()) {
+                        query.setTooltip(new Tooltip(viewModel.queryValidationStatus().getHighestMessage().get().getMessage()));
+                        query.pseudoClassStateChanged(QUERY_INVALID, true);
+                    } else {
+                        query.setTooltip(null);
+                        query.pseudoClassStateChanged(QUERY_INVALID, false);
+                    }
+                });
 
         // Allows to trigger search on pressing enter
         query.setOnKeyPressed(event -> {

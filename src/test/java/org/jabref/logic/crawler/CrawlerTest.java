@@ -1,6 +1,7 @@
 package org.jabref.logic.crawler;
 
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -8,8 +9,8 @@ import java.nio.file.Path;
 import org.jabref.logic.bibtex.FieldContentFormatterPreferences;
 import org.jabref.logic.citationkeypattern.CitationKeyPatternPreferences;
 import org.jabref.logic.citationkeypattern.GlobalCitationKeyPattern;
-import org.jabref.logic.crawler.git.GitHandler;
 import org.jabref.logic.exporter.SavePreferences;
+import org.jabref.logic.git.SlrGitHandler;
 import org.jabref.logic.importer.ImportFormatPreferences;
 import org.jabref.logic.preferences.TimestampPreferences;
 import org.jabref.logic.util.io.FileUtil;
@@ -37,42 +38,33 @@ class CrawlerTest {
     SavePreferences savePreferences;
     TimestampPreferences timestampPreferences;
     BibEntryTypesManager entryTypesManager;
-    GitHandler gitHandler = mock(GitHandler.class, Answers.RETURNS_DEFAULTS);
+    SlrGitHandler gitHandler = mock(SlrGitHandler.class, Answers.RETURNS_DEFAULTS);
+    String hashCodeQuantum = String.valueOf("Quantum".hashCode());
+    String hashCodeCloudComputing = String.valueOf("Cloud Computing".hashCode());
 
     @Test
     public void testWhetherAllFilesAreCreated() throws Exception {
         setUp();
-        Crawler testCrawler = new Crawler(getPathToStudyDefinitionFile(),
-                gitHandler,
-                new DummyFileUpdateMonitor(),
-                importFormatPreferences,
-                savePreferences,
-                timestampPreferences,
-                entryTypesManager
-        );
+        Crawler testCrawler = new Crawler(getPathToStudyDefinitionFile(), gitHandler, importFormatPreferences, savePreferences, timestampPreferences, entryTypesManager, new DummyFileUpdateMonitor());
 
         testCrawler.performCrawl();
 
-        assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), "1 - Quantum")));
-        assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), "2 - Cloud Computing")));
-        assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), "3 - TestSearchQuery3")));
+        assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), hashCodeQuantum + " - Quantum")));
+        assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), hashCodeCloudComputing + " - Cloud Computing")));
 
-        assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), "1 - Quantum", "ArXiv.bib")));
-        assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), "2 - Cloud Computing", "ArXiv.bib")));
-        assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), "3 - TestSearchQuery3", "ArXiv.bib")));
+        assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), hashCodeQuantum + " - Quantum", "ArXiv.bib")));
+        assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), hashCodeCloudComputing + " - Cloud Computing", "ArXiv.bib")));
 
-        assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), "1 - Quantum", "Springer.bib")));
-        assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), "2 - Cloud Computing", "Springer.bib")));
-        assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), "3 - TestSearchQuery3", "Springer.bib")));
+        assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), hashCodeQuantum + " - Quantum", "Springer.bib")));
+        assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), hashCodeCloudComputing + " - Cloud Computing", "Springer.bib")));
 
-        assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), "1 - Quantum", "result.bib")));
-        assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), "2 - Cloud Computing", "result.bib")));
-        assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), "3 - TestSearchQuery3", "result.bib")));
+        assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), hashCodeQuantum + " - Quantum", "result.bib")));
+        assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), hashCodeCloudComputing + " - Cloud Computing", "result.bib")));
         assertTrue(Files.exists(Path.of(tempRepositoryDirectory.toString(), "studyResult.bib")));
     }
 
     private Path getPathToStudyDefinitionFile() {
-        return tempRepositoryDirectory.resolve("study.bib");
+        return tempRepositoryDirectory;
     }
 
     /**
@@ -99,6 +91,7 @@ class CrawlerTest {
         when(savePreferences.getEncoding()).thenReturn(null);
         when(savePreferences.takeMetadataSaveOrderInAccount()).thenReturn(true);
         when(savePreferences.getCitationKeyPatternPreferences()).thenReturn(citationKeyPatternPreferences);
+        when(savePreferences.getEncoding()).thenReturn(Charset.defaultCharset());
         when(importFormatPreferences.getKeywordSeparator()).thenReturn(',');
         when(importFormatPreferences.getFieldContentFormatterPreferences()).thenReturn(new FieldContentFormatterPreferences());
         when(importFormatPreferences.isKeywordSyncEnabled()).thenReturn(false);
@@ -121,8 +114,8 @@ class CrawlerTest {
     }
 
     private void setUpTestStudyDefinitionFile() throws Exception {
-        Path destination = tempRepositoryDirectory.resolve("study.bib");
-        URL studyDefinition = this.getClass().getResource("study.bib");
+        Path destination = tempRepositoryDirectory.resolve("study.yml");
+        URL studyDefinition = this.getClass().getResource("study.yml");
         FileUtil.copyFile(Path.of(studyDefinition.toURI()), destination, false);
     }
 }
