@@ -22,7 +22,6 @@ import org.jabref.logic.exporter.SavePreferences;
 import org.jabref.logic.git.SlrGitHandler;
 import org.jabref.logic.importer.ImportFormatPreferences;
 import org.jabref.logic.importer.OpenDatabase;
-import org.jabref.logic.importer.ParseException;
 import org.jabref.logic.importer.SearchBasedFetcher;
 import org.jabref.logic.l10n.Localization;
 import org.jabref.model.database.BibDatabase;
@@ -171,10 +170,9 @@ class StudyRepository {
      *
      * @return List of all queries as Strings.
      */
-    public List<String> getSearchQueryStrings() {
+    public List<StudyQuery> getSearchQueryStrings() {
         return study.getQueries()
                     .parallelStream()
-                    .map(StudyQuery::getBaseQuery)
                     .collect(Collectors.toList());
     }
 
@@ -269,11 +267,11 @@ class StudyRepository {
     private void setUpRepositoryStructure() throws IOException {
         // Cannot use stream here since IOException has to be thrown
         StudyDatabaseToFetcherConverter converter = new StudyDatabaseToFetcherConverter(this.getActiveLibraryEntries(), importFormatPreferences);
-        for (String query : this.getSearchQueryStrings()) {
-            createQueryResultFolder(query);
+        for (StudyQuery query : this.getSearchQueryStrings()) {
+            createQueryResultFolder(query.getBaseQuery());
             converter.getActiveFetchers()
-                     .forEach(searchBasedFetcher -> createFetcherResultFile(query, searchBasedFetcher));
-            createQueryResultFile(query);
+                     .forEach(searchBasedFetcher -> createFetcherResultFile(query.getBaseQuery(), searchBasedFetcher));
+            createQueryResultFile(query.getBaseQuery());
         }
         createStudyResultFile();
     }
