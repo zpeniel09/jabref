@@ -7,6 +7,8 @@ research-questions:
   - Question2
 queries:
   - query: Quantum
+    library-specific-query-refinements:
+      ArXiv: "quantum arxiv query"
   - query: Cloud Computing
   - query: '"Software Engineering"'
 databases:

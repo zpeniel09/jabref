@@ -1,7 +1,14 @@
 package org.jabref.model.study;
 
+import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class StudyQuery {
     private String query;
+    @JsonProperty("library-specific-query-refinements")
+    private Map<String, String> librarySpecificQueryRefinements;
+
 
     public StudyQuery(String query) {
         this.query = query;
@@ -14,12 +21,20 @@ public class StudyQuery {
 
     }
 
-    public String getQuery() {
+    public String getBaseQuery() {
         return query;
+    }
+
+    public String getLibrarySpecificQuery(String libraryName) {
+        return librarySpecificQueryRefinements.getOrDefault(libraryName, query);
     }
 
     public void setQuery(String query) {
         this.query = query;
+    }
+
+    public void setLibrarySpecificQueryRefinements(Map<String, String> queryRefinements) {
+        this.librarySpecificQueryRefinements = queryRefinements;
     }
 
     @Override
@@ -33,12 +48,12 @@ public class StudyQuery {
 
         StudyQuery that = (StudyQuery) o;
 
-        return getQuery() != null ? getQuery().equals(that.getQuery()) : that.getQuery() == null;
+        return getBaseQuery() != null ? getBaseQuery().equals(that.getBaseQuery()) : that.getBaseQuery() == null;
     }
 
     @Override
     public int hashCode() {
-        return getQuery() != null ? getQuery().hashCode() : 0;
+        return getBaseQuery() != null ? getBaseQuery().hashCode() : 0;
     }
 
     @Override

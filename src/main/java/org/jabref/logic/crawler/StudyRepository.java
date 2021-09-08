@@ -75,14 +75,13 @@ class StudyRepository {
      *                                  contain the study definition file.
      * @throws IOException              Thrown if the given repository does not exists, or the study definition file
      *                                  does not exist
-     * @throws ParseException           Problem parsing the study definition file.
      */
     public StudyRepository(Path pathToRepository,
                            SlrGitHandler gitHandler,
                            ImportFormatPreferences importFormatPreferences,
                            FileUpdateMonitor fileUpdateMonitor,
                            SavePreferences savePreferences,
-                           BibEntryTypesManager bibEntryTypesManager) throws IOException, ParseException {
+                           BibEntryTypesManager bibEntryTypesManager) throws IOException {
         this.repositoryPath = pathToRepository;
         this.gitHandler = gitHandler;
         this.importFormatPreferences = importFormatPreferences;
@@ -175,7 +174,7 @@ class StudyRepository {
     public List<String> getSearchQueryStrings() {
         return study.getQueries()
                     .parallelStream()
-                    .map(StudyQuery::getQuery)
+                    .map(StudyQuery::getBaseQuery)
                     .collect(Collectors.toList());
     }
 
