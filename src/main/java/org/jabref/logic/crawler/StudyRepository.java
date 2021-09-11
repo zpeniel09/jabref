@@ -21,7 +21,6 @@ import org.jabref.logic.exporter.SavePreferences;
 import org.jabref.logic.git.SlrGitHandler;
 import org.jabref.logic.importer.ImportFormatPreferences;
 import org.jabref.logic.importer.OpenDatabase;
-import org.jabref.logic.importer.SearchBasedFetcher;
 import org.jabref.logic.l10n.Localization;
 import org.jabref.model.database.BibDatabase;
 import org.jabref.model.database.BibDatabaseContext;
@@ -51,7 +50,6 @@ class StudyRepository {
     private static final Pattern MATCHCOLON = Pattern.compile(":");
     private static final Pattern MATCHILLEGALCHARACTERS = Pattern.compile("[^A-Za-z0-9_.\\s=-]");
     // Currently we make assumptions about the configuration: the remotes, work and search branch names
-    private static final String REMOTE = "origin";
     private static final String WORK_BRANCH = "work";
     private static final String SEARCH_BRANCH = "search";
 
@@ -167,9 +165,9 @@ class StudyRepository {
     /**
      * Returns all query strings of the study definition
      *
-     * @return List of all queries as Strings.
+     * @return List of all queries.
      */
-    public List<StudyQuery> getSearchQueryStrings() {
+    public List<StudyQuery> getSearchQueries() {
         return study.getQueries()
                     .parallelStream()
                     .collect(Collectors.toList());
@@ -263,11 +261,9 @@ class StudyRepository {
      */
     private void setUpRepositoryStructure() throws IOException {
         // Cannot use stream here since IOException has to be thrown
-        StudyDatabaseToFetcherConverter converter = new StudyDatabaseToFetcherConverter(this.getActiveLibraryEntries(), importFormatPreferences);
-        for (StudyQuery query : this.getSearchQueryStrings()) {
+        for (StudyQuery query : this.getSearchQueries()) {
             createQueryResultFolder(query.getBaseQuery());
-            converter.getActiveFetchers()
-                     .forEach(searchBasedFetcher -> createFetcherResultFile(query.getBaseQuery(), searchBasedFetcher));
+            getActiveLibraryEntries().forEach(library -> createFetcherResultFile(query.getBaseQuery(), library.getName()));
             createQueryResultFile(query.getBaseQuery());
         }
         createStudyResultFile();
@@ -290,8 +286,7 @@ class StudyRepository {
         }
     }
 
-    private void createFetcherResultFile(String query, SearchBasedFetcher searchBasedFetcher) {
-        String fetcherName = searchBasedFetcher.getName();
+    private void createFetcherResultFile(String query, String fetcherName) {
         Path fetcherResultFile = getPathToFetcherResultFile(query, fetcherName);
         createBibFile(fetcherResultFile);
     }
