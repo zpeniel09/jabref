@@ -3,15 +3,14 @@ package org.jabref.model.study;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonSetter;
 
-@JsonPropertyOrder({"query", "library-specific-query-refinements"})
+@JsonPropertyOrder({"query", "refinements"})
 public class StudyQuery {
     private String query;
-    @JsonProperty("library-specific-query-refinements")
-    private Map<String, String> librarySpecificQueryRefinements = new HashMap<>();
-
+    private Map<String, String> queryRefinements = new HashMap<>();
 
     public StudyQuery(String query) {
         this.query = query;
@@ -24,27 +23,30 @@ public class StudyQuery {
 
     }
 
-    @JsonProperty("query")
+    // Serialization as query
+    @JsonGetter("query")
     public String getBaseQuery() {
         return query;
     }
 
-
-    public Map<String, String> getLibrarySpecificQueryRefinements() {
-        return librarySpecificQueryRefinements;
+    @JsonGetter("refinements")
+    public Map<String, String> getQueryRefinements() {
+        return queryRefinements;
     }
 
-    public String getLibrarySpecificQuery(String libraryName) {
-        return librarySpecificQueryRefinements.getOrDefault(libraryName, query);
+    public String getLibrarySpecificQueryOrDefault(String libraryName) {
+        return queryRefinements.getOrDefault(libraryName, query);
     }
 
-    @JsonProperty("query")
+    // Deserialization from query
+    @JsonSetter("query")
     public void setBaseQuery(String query) {
         this.query = query;
     }
 
-    public void setLibrarySpecificQueryRefinements(Map<String, String> queryRefinements) {
-        this.librarySpecificQueryRefinements = queryRefinements;
+    @JsonSetter("refinements")
+    public void setQueryRefinements(Map<String, String> queryRefinements) {
+        this.queryRefinements = queryRefinements;
     }
 
     @Override
@@ -58,7 +60,7 @@ public class StudyQuery {
 
         StudyQuery that = (StudyQuery) o;
 
-        if (!librarySpecificQueryRefinements.equals(that.getLibrarySpecificQueryRefinements())) {
+        if (!queryRefinements.equals(that.getQueryRefinements())) {
             return false;
         }
 
@@ -74,7 +76,7 @@ public class StudyQuery {
     public String toString() {
         return "QueryEntry{" +
                 "query='" + query + '\'' + ", " +
-                librarySpecificQueryRefinements.toString() +
+                queryRefinements +
                 '}';
     }
 }

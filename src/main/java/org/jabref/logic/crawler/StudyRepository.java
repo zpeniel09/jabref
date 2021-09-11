@@ -6,7 +6,6 @@ import java.io.Writer;
 import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -207,12 +206,10 @@ class StudyRepository {
      */
     public void persist(List<QueryResult> crawlResults) throws IOException, GitAPIException, SaveException {
         updateWorkAndSearchBranch();
-        study.setLastSearchDate(LocalDate.now());
         persistStudy();
-        gitHandler.createCommitOnCurrentBranch("Update search date", true);
+        gitHandler.createCommitOnCurrentBranch("Write config file", true);
         gitHandler.checkoutBranch(SEARCH_BRANCH);
         persistResults(crawlResults);
-        study.setLastSearchDate(LocalDate.now());
         persistStudy();
         try {
             // First commit changes to search branch branch and update remote

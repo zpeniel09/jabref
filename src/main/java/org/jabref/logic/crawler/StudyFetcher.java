@@ -57,7 +57,7 @@ class StudyFetcher {
      */
     private List<FetchResult> performSearchOnQuery(StudyQuery searchQuery) {
         return activeFetchers.parallelStream()
-                             .map(fetcher -> performSearchOnQueryForFetcher(searchQuery.getLibrarySpecificQuery(fetcher.getName()), fetcher))
+                             .map(fetcher -> performSearchOnQueryForFetcher(searchQuery.getLibrarySpecificQueryOrDefault(fetcher.getName()), fetcher))
                              .filter(Objects::nonNull)
                              .collect(Collectors.toList());
     }
