@@ -42,6 +42,7 @@ public class FetcherDelegator {
         if (searchQuery.isBlank()) {
             return Collections.emptyList();
         }
+        // TODO: The delegator furthermore should detect whether the proposed query is a specialized query (e.g. doi and use the appropriate fetcher, instead of the provided one
 
         SyntaxParser parser = new StandardSyntaxParser();
         QueryNode queryNode;
@@ -53,7 +54,7 @@ public class FetcherDelegator {
 
         AbstractQueryTransformer transformer = getTransformer(fetcher);
         Optional<String> transformedQuery = transformer.transformLuceneQuery(queryNode);
-        return postProcessResult(fetcher.performSearch(transformedQuery.orElse(searchQuery)), transformer);
+        return postFilterResult(fetcher.performSearch(transformedQuery.orElse(searchQuery)), transformer);
     }
 
     private AbstractQueryTransformer getTransformer(SearchBasedFetcher fetcher) {
@@ -74,11 +75,12 @@ public class FetcherDelegator {
 
     /**
      * Depending on the type of query transformer the result has to be filtered
-     * @param result the result
-     * @param transformer transformer used for the query, depending on the type, post processing is requried
+     *
+     * @param result      the result
+     * @param transformer transformer used for the query, depending on the type, post filtering is required
      * @return a filtered result list
      */
-    private List<BibEntry> postProcessResult(List<BibEntry> result, AbstractQueryTransformer transformer) {
+    private List<BibEntry> postFilterResult(List<BibEntry> result, AbstractQueryTransformer transformer) {
         // TODO
         return result;
     }
