@@ -3,7 +3,7 @@ package org.jabref.model.groups;
 import java.util.EnumSet;
 
 import org.jabref.model.entry.BibEntry;
-import org.jabref.model.search.rules.SearchRules;
+import org.jabref.logic.search.rules.SearchRules;
 
 import org.junit.jupiter.api.Test;
 
