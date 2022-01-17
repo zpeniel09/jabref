@@ -26,7 +26,11 @@ import org.jabref.model.entry.field.Field;
 import org.jabref.model.entry.field.InternalField;
 import org.jabref.model.strings.StringUtil;
 
+import org.slf4j.LoggerFactory;
+
 public class BibEntryWriter {
+
+    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(BibEntryWriter.class);
 
     private final BibEntryTypesManager entryTypesManager;
     private final FieldWriter fieldWriter;
@@ -93,7 +97,7 @@ public class BibEntryWriter {
 
         Set<Field> written = new HashSet<>();
         written.add(InternalField.KEY_FIELD);
-        int indentation = getLengthOfLongestFieldName(entry);
+        final int indent = getLengthOfLongestFieldName(entry);
 
         Optional<BibEntryType> type = entryTypesManager.enrich(entry.getType(), bibDatabaseMode);
         if (type.isPresent()) {
@@ -106,7 +110,7 @@ public class BibEntryWriter {
                                              .collect(Collectors.toList());
 
             for (Field field : requiredFields) {
-                writeField(entry, out, field, indentation);
+                writeField(entry, out, field, indent);
             }
 
             // Then optional fields
@@ -118,7 +122,7 @@ public class BibEntryWriter {
                                              .collect(Collectors.toList());
 
             for (Field field : optionalFields) {
-                writeField(entry, out, field, indentation);
+                writeField(entry, out, field, indent);
             }
 
             written.addAll(requiredFields);
@@ -131,7 +135,7 @@ public class BibEntryWriter {
                                                 .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(Field::getName))));
 
         for (Field field : remainingFields) {
-            writeField(entry, out, field, indentation);
+            writeField(entry, out, field, indent);
         }
 
         // Finally, end the entry.
@@ -151,22 +155,24 @@ public class BibEntryWriter {
      * @param field the field
      * @throws IOException In case of an IO error
      */
-    private void writeField(BibEntry entry, BibWriter out, Field field, int indentation) throws IOException {
+    private void writeField(BibEntry entry, BibWriter out, Field field, int indent) throws IOException {
         Optional<String> value = entry.getField(field);
         // only write field if it is not empty
         // field.ifPresent does not work as an IOException may be thrown
         if (value.isPresent() && !value.get().trim().isEmpty()) {
-            out.write("  " + getFormattedFieldName(field, indentation));
+            out.write("  ");
+            out.write(getFormattedFieldName(field, indent));
             try {
                 out.write(fieldWriter.write(field, value.get()));
             } catch (InvalidFieldValueException ex) {
+                LOGGER.warn("Invalid field value {} of field {} of entry {]", value.get(), field, entry.getCitationKey().orElse(""), ex);
                 throw new IOException("Error in field '" + field + " of entry " + entry.getCitationKey().orElse("") + "': " + ex.getMessage(), ex);
             }
             out.writeLine(",");
         }
     }
 
-    private int getLengthOfLongestFieldName(BibEntry entry) {
+    static int getLengthOfLongestFieldName(BibEntry entry) {
         Predicate<Field> isNotCitationKey = field -> !InternalField.KEY_FIELD.equals(field);
         return entry.getFields()
                     .stream()
@@ -177,7 +183,7 @@ public class BibEntryWriter {
     }
 
     /**
-     * Get display version of a entry field.
+     * Get display version of an entry field.
      * <p>
      * BibTeX is case-insensitive therefore there is no difference between: howpublished, HOWPUBLISHED, HowPublished, etc.
      * <p>
@@ -188,8 +194,8 @@ public class BibEntryWriter {
      * @param field The name of the field.
      * @return The display version of the field name.
      */
-    private String getFormattedFieldName(Field field, int intention) {
+    static String getFormattedFieldName(Field field, int indent) {
         String fieldName = field.getName();
-        return fieldName.toLowerCase(Locale.ROOT) + StringUtil.repeatSpaces(intention - fieldName.length()) + " = ";
+        return fieldName.toLowerCase(Locale.ROOT) + StringUtil.repeatSpaces(indent - fieldName.length()) + " = ";
     }
 }

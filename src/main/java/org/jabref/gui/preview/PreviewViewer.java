@@ -20,9 +20,9 @@ import org.jabref.gui.DialogService;
 import org.jabref.gui.Globals;
 import org.jabref.gui.StateManager;
 import org.jabref.gui.desktop.JabRefDesktop;
+import org.jabref.gui.theme.ThemeManager;
 import org.jabref.gui.util.BackgroundTask;
 import org.jabref.gui.util.TaskExecutor;
-import org.jabref.gui.util.Theme;
 import org.jabref.logic.exporter.ExporterFactory;
 import org.jabref.logic.l10n.Localization;
 import org.jabref.logic.preview.PreviewLayout;
@@ -123,7 +123,10 @@ public class PreviewViewer extends ScrollPane implements InvalidationListener {
     /**
      * @param database Used for resolving strings and pdf directories for links.
      */
-    public PreviewViewer(BibDatabaseContext database, DialogService dialogService, StateManager stateManager) {
+    public PreviewViewer(BibDatabaseContext database,
+                         DialogService dialogService,
+                         StateManager stateManager,
+                         ThemeManager themeManager) {
         this.database = Objects.requireNonNull(database);
         this.dialogService = dialogService;
         this.clipBoardManager = Globals.getClipboardManager();
@@ -154,21 +157,21 @@ public class PreviewViewer extends ScrollPane implements InvalidationListener {
                     EventTarget target = evt.getCurrentTarget();
                     HTMLAnchorElement anchorElement = (HTMLAnchorElement) target;
                     String href = anchorElement.getHref();
-                    try {
-                        JabRefDesktop.openBrowser(href);
-                    } catch (MalformedURLException exception) {
-                        LOGGER.error("Invalid URL", exception);
-                    } catch (IOException exception) {
-                        LOGGER.error("Invalid URL Input", exception);
+                    if (href != null) {
+                        try {
+                            JabRefDesktop.openBrowser(href);
+                        } catch (MalformedURLException exception) {
+                            LOGGER.error("Invalid URL", exception);
+                        } catch (IOException exception) {
+                            LOGGER.error("Invalid URL Input", exception);
+                        }
                     }
                     evt.preventDefault();
                 }, false);
             }
         });
-    }
 
-    public void setTheme(Theme theme) {
-        theme.getAdditionalStylesheet().ifPresent(location -> previewView.getEngine().setUserStyleSheetLocation(location));
+        themeManager.installCss(previewView.getEngine());
     }
 
     private void highlightSearchPattern() {
@@ -196,6 +199,10 @@ public class PreviewViewer extends ScrollPane implements InvalidationListener {
     }
 
     public void setLayout(PreviewLayout newLayout) {
+        // Change listeners might set the layout to null while the update method is executing, therefore we need to prevent this here
+        if (newLayout == null) {
+            return;
+        }
         layout = newLayout;
         update();
     }

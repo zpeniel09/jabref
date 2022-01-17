@@ -61,7 +61,7 @@ public class JabRefGUI {
         new VersionWorker(Globals.BUILD_INFO.version,
                 mainFrame.getDialogService(),
                 Globals.TASK_EXECUTOR,
-                preferencesService.getVersionPreferences())
+                preferencesService.getInternalPreferences())
                 .checkForNewVersionDelayed();
     }
 
@@ -95,7 +95,7 @@ public class JabRefGUI {
         root.getChildren().add(JabRefGUI.mainFrame);
 
         Scene scene = new Scene(root, 800, 800);
-        preferencesService.getTheme().installCss(scene);
+        Globals.getThemeManager().installCss(scene);
 
         // Handle TextEditor key bindings
         scene.addEventFilter(KeyEvent.KEY_PRESSED, event -> TextInputKeyBindings.call(scene, event));

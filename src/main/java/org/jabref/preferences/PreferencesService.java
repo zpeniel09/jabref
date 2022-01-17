@@ -9,14 +9,12 @@ import java.util.prefs.BackingStoreException;
 
 import org.jabref.gui.autocompleter.AutoCompletePreferences;
 import org.jabref.gui.entryeditor.EntryEditorPreferences;
-import org.jabref.gui.groups.GroupViewMode;
 import org.jabref.gui.groups.GroupsPreferences;
 import org.jabref.gui.keyboard.KeyBindingRepository;
 import org.jabref.gui.maintable.ColumnPreferences;
 import org.jabref.gui.maintable.MainTableNameFormatPreferences;
 import org.jabref.gui.maintable.MainTablePreferences;
 import org.jabref.gui.specialfields.SpecialFieldsPreferences;
-import org.jabref.gui.util.Theme;
 import org.jabref.logic.JabRefException;
 import org.jabref.logic.bibtex.FieldContentFormatterPreferences;
 import org.jabref.logic.bibtex.FieldWriterPreferences;
@@ -53,7 +51,7 @@ import org.jabref.model.metadata.SaveOrderConfig;
 
 public interface PreferencesService {
 
-    VersionPreferences getVersionPreferences();
+    InternalPreferences getInternalPreferences();
 
     JournalAbbreviationPreferences getJournalAbbreviationPreferences();
 
@@ -148,14 +146,6 @@ public interface PreferencesService {
 
     GroupsPreferences getGroupsPreferences();
 
-    void storeGroupsPreferences(GroupsPreferences preferences);
-
-    GroupViewMode getGroupViewMode();
-
-    void setGroupViewMode(GroupViewMode mode);
-
-    boolean getDisplayGroupCount();
-
     //*************************************************************************************************************
     // EntryEditorPreferences
     //*************************************************************************************************************
@@ -206,7 +196,7 @@ public interface PreferencesService {
 
     ColumnPreferences getColumnPreferences();
 
-    void storeColumnPreferences(ColumnPreferences columnPreferences);
+    void storeMainTableColumnPreferences(ColumnPreferences columnPreferences);
 
     MainTablePreferences getMainTablePreferences();
 
@@ -217,12 +207,16 @@ public interface PreferencesService {
     void storeMainTableNameFormatPreferences(MainTableNameFormatPreferences preferences);
 
     //*************************************************************************************************************
-    // AppearancePreferences
+    // SearchDialogColumnPreferences
     //*************************************************************************************************************
 
-    Theme getTheme();
+    ColumnPreferences getSearchDialogColumnPreferences();
 
-    void updateTheme();
+    void storeSearchDialogColumnPreferences(ColumnPreferences columnPreferences);
+
+    //*************************************************************************************************************
+    // AppearancePreferences
+    //*************************************************************************************************************
 
     AppearancePreferences getAppearancePreferences();
 
@@ -266,10 +260,6 @@ public interface PreferencesService {
 
     PreviewPreferences getPreviewPreferences();
 
-    void updatePreviewPreferences();
-
-    void storePreviewPreferences(PreviewPreferences previewPreferences);
-
     //*************************************************************************************************************
     // SidePanePreferences
     //*************************************************************************************************************
@@ -290,13 +280,9 @@ public interface PreferencesService {
 
     XmpPreferences getXmpPreferences();
 
-    void storeXmpPreferences(XmpPreferences preferences);
-
     NameFormatterPreferences getNameFormatterPreferences();
 
     AutoCompletePreferences getAutoCompletePreferences();
-
-    void storeAutoCompletePreferences(AutoCompletePreferences autoCompletePreferences);
 
     SpecialFieldsPreferences getSpecialFieldsPreferences();
 
@@ -321,4 +307,5 @@ public interface PreferencesService {
     void storeIdBasedFetcherForEntryGenerator(String fetcherName);
 
     ProtectedTermsPreferences getProtectedTermsPreferences();
+
 }
