@@ -3,12 +3,14 @@ package org.jabref.preferences;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.prefs.BackingStoreException;
 
+import javafx.collections.ObservableSet;
+
 import org.jabref.gui.autocompleter.AutoCompletePreferences;
 import org.jabref.gui.entryeditor.EntryEditorPreferences;
+import org.jabref.gui.externalfiletype.ExternalFileType;
 import org.jabref.gui.groups.GroupsPreferences;
 import org.jabref.gui.keyboard.KeyBindingRepository;
 import org.jabref.gui.maintable.ColumnPreferences;
@@ -275,12 +277,11 @@ public interface PreferencesService {
 
     void storeLastPreferencesExportPath(Path exportFile);
 
-    Optional<String> getExternalFileTypes();
+    ObservableSet<ExternalFileType> getExternalFileTypes();
 
-    void storeExternalFileTypes(String externalFileTypes);
+    void storeExternalFileTypes(Set<ExternalFileType> externalFileTypes);
 
     MrDlibPreferences getMrDlibPreferences();
 
     ProtectedTermsPreferences getProtectedTermsPreferences();
-
 }

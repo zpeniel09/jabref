@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,6 +36,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javafx.beans.InvalidationListener;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener;
 import javafx.scene.control.TableColumn.SortType;
 
@@ -43,6 +46,8 @@ import org.jabref.gui.autocompleter.AutoCompleteFirstNameMode;
 import org.jabref.gui.autocompleter.AutoCompletePreferences;
 import org.jabref.gui.desktop.JabRefDesktop;
 import org.jabref.gui.entryeditor.EntryEditorPreferences;
+import org.jabref.gui.externalfiletype.ExternalFileType;
+import org.jabref.gui.externalfiletype.ExternalFileTypes;
 import org.jabref.gui.groups.GroupViewMode;
 import org.jabref.gui.groups.GroupsPreferences;
 import org.jabref.gui.keyboard.KeyBindingRepository;
@@ -425,6 +430,7 @@ public class JabRefPreferences implements PreferencesService {
 
     private List<MainTableColumnModel> searchDialogTableColunns;
     private List<MainTableColumnModel> searchDialogColumnSortOrder;
+    private ObservableSet<ExternalFileType> externalFileTypes;
 
     private Set<CustomImporter> customImporters;
     private String userName;
@@ -1894,21 +1900,21 @@ public class JabRefPreferences implements PreferencesService {
     public List<MainTableColumnModel> updateColumns(String columnNamesList, String columnWidthList, String sortTypeList, double defaultWidth) {
         List<String> columnNames = getStringList(columnNamesList);
         List<Double> columnWidths = getStringList(columnWidthList)
-                                                                  .stream()
-                                                                  .map(string -> {
-                                                                      try {
-                                                                          return Double.parseDouble(string);
-                                                                      } catch (NumberFormatException e) {
-                                                                          LOGGER.error("Exception while parsing column widths. Choosing default.", e);
-                                                                          return defaultWidth;
-                                                                      }
-                                                                  })
-                                                                  .collect(Collectors.toList());
+                .stream()
+                .map(string -> {
+                    try {
+                        return Double.parseDouble(string);
+                    } catch (NumberFormatException e) {
+                        LOGGER.error("Exception while parsing column widths. Choosing default.", e);
+                        return defaultWidth;
+                    }
+                })
+                .toList();
 
         List<SortType> columnSortTypes = getStringList(sortTypeList)
-                                                                    .stream()
-                                                                    .map(SortType::valueOf)
-                                                                    .collect(Collectors.toList());
+                .stream()
+                .map(SortType::valueOf)
+                .toList();
 
         List<MainTableColumnModel> columns = new ArrayList<>();
         for (int i = 0; i < columnNames.size(); i++) {
@@ -2736,13 +2742,24 @@ public class JabRefPreferences implements PreferencesService {
     }
 
     @Override
-    public Optional<String> getExternalFileTypes() {
-        return Optional.ofNullable(get(EXTERNAL_FILE_TYPES, null));
+    public ObservableSet<ExternalFileType> getExternalFileTypes() {
+        if (Objects.isNull(externalFileTypes)) {
+            updateExternalFileTypes();
+        }
+
+        return externalFileTypes;
+    }
+
+    private void updateExternalFileTypes() {
+        externalFileTypes = FXCollections.observableSet(new TreeSet<>(Comparator.comparing(ExternalFileType::getName)));
+        externalFileTypes.addAll(ExternalFileTypes.parseString(get(EXTERNAL_FILE_TYPES, "")));
     }
 
     @Override
-    public void storeExternalFileTypes(String externalFileTypes) {
-        put(EXTERNAL_FILE_TYPES, externalFileTypes);
+    public void storeExternalFileTypes(Set<ExternalFileType> externalFileTypes) {
+        put(EXTERNAL_FILE_TYPES, ExternalFileTypes.createStringList(externalFileTypes));
+
+        updateExternalFileTypes();
     }
 
     @Override

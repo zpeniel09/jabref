@@ -48,7 +48,7 @@ public class LinkedFilesEditDialogViewModel extends AbstractViewModel {
         this.dialogService = dialogService;
         this.filePreferences = filePreferences;
         this.externalFileTypes = externalFileTypes;
-        allExternalFileTypes.set(FXCollections.observableArrayList(externalFileTypes.getExternalFileTypeSelection()));
+        allExternalFileTypes.set(FXCollections.observableArrayList(externalFileTypes.getExternalFileTypes()));
 
         monadicSelectedExternalFileType = EasyBind.wrapNullable(selectedExternalFileType);
         setValues(linkedFile);
