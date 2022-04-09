@@ -48,48 +48,48 @@ class EntryEditorTabTest {
     //Test if the tab should show the given entry
     @Test
     void shouldShow() {
-        entryEditorTab.currentEntry = bibEntry;             //Set the current entry to the given entry
-        entryEditorTab.currentEntryType = entryType;        //Set the current entry type to the given entry type
-        assertFalse(entryEditorTab.shouldShow(bibEntry));   //Assert that the tab should show the given entry
+        entryEditorTab.setCurrentEntry(bibEntry);               //Set the current entry to the given entry
+        entryEditorTab.setCurrentEntryType(entryType);          //Set the current entry type to the given entry type
+        assertFalse(entryEditorTab.shouldShow(bibEntry));       //Assert that the tab should show the given entry
     }
 
     //Test if the tab should not show the given entry
     @Test
     void shouldNotShow() {
-        entryEditorTab.currentEntry = bibEntry;             //Set the current entry to the given entry
-        entryEditorTab.currentEntryType = entryType;        //Set the current entry type to the given entry type
-        assertFalse(entryEditorTab.shouldShow(bibEntry));  //Assert that the tab should not show the given entry
+        entryEditorTab.setCurrentEntry(bibEntry);               //Set the current entry to the given entry
+        entryEditorTab.setCurrentEntryType(entryType);          //Set the current entry type to the given entry type
+        assertFalse(entryEditorTab.shouldShow(bibEntry));       //Assert that the tab should not show the given entry
     }
 
     //Test if the tab should show the given entry
     @Test
     void shouldShow2() {
-        entryEditorTab.currentEntry = bibEntry;             //Set the current entry to the given entry
-        entryEditorTab.currentEntryType = entryType;        //Set the current entry type to the given entry type
-        assertFalse(entryEditorTab.shouldShow(bibEntry));   //Assert that the tab should show the given entry
+        entryEditorTab.setCurrentEntry(bibEntry);               //Set the current entry to the given entry
+        entryEditorTab.setCurrentEntryType(entryType);          //Set the current entry type to the given entry type
+        assertFalse(entryEditorTab.shouldShow(bibEntry));       //Assert that the tab should show the given entry
     }
 
     
     @Test
     void shouldNotShow2() {
-        entryEditorTab.currentEntry = bibEntry;             //Set the current entry to the given entry
-        entryEditorTab.currentEntryType = entryType;        //Set the current entry to the given entry
-        assertFalse(entryEditorTab.shouldShow(bibEntry));   //Assert that the tab should not show the given entry
+        entryEditorTab.setCurrentEntry(bibEntry);               //Set the current entry to the given entry
+        entryEditorTab.setCurrentEntryType(entryType);          //Set the current entry to the given entry
+        assertFalse(entryEditorTab.shouldShow(bibEntry));       //Assert that the tab should not show the given entry
     }
 
     //Test if the tab should show the given entry
     @Test
     void shouldShow3() {
-        entryEditorTab.currentEntry = bibEntry;             //Set the current entry to the given entry
-        entryEditorTab.currentEntryType = entryType;        //Set the current entry type to the given entry type
-        assertFalse(entryEditorTab.shouldShow(bibEntry));   //Assert that the tab should show the given entry
+        entryEditorTab.setCurrentEntry(bibEntry);               //Set the current entry to the given entry
+        entryEditorTab.setCurrentEntryType(entryType);          //Set the current entry type to the given entry type
+        assertFalse(entryEditorTab.shouldShow(bibEntry));       //Assert that the tab should show the given entry
     }
 
     //Test if the tab should not show the given entry
     @Test
     void shouldNotShow3() {
-        entryEditorTab.currentEntry = bibEntry;              //Set the current entry to the given entry
-        entryEditorTab.currentEntryType = entryType;         //Set the current entry type to the given entry type
-        assertFalse(entryEditorTab.shouldShow(bibEntry));    //Assert that the tab should not show the given entry
+        entryEditorTab.setCurrentEntry(bibEntry);               //Set the current entry to the given entry
+        entryEditorTab.setCurrentEntryType(entryType);          //Set the current entry type to the given entry type
+        assertFalse(entryEditorTab.shouldShow(bibEntry));       //Assert that the tab should not show the given entry
     }
 }
