@@ -57,4 +57,25 @@ public abstract class EntryEditorTab extends Tab {
     protected void previousPreviewStyle() {
         // do nothing by default
     }
+
+    /**
+     * Needed to track for which type of entry this tab was build and to rebuild it if the type changes
+     */
+    public EntryType getCurrentEntryType() {
+        
+        return currentEntryType;
+    }
+
+    public void setCurrentEntryType(EntryType currentEntryType) {
+        this.currentEntryType = currentEntryType;
+    }
+
+    public BibEntry getCurrentEntry() {
+        
+        return currentEntry;
+    }
+
+    public void setCurrentEntry(BibEntry currentEntry) {
+        this.currentEntry = currentEntry;
+    }
 }
